@@ -24,20 +24,17 @@ public class SwerveModule extends SubsystemBase {
 
     public SwerveModule(int driveMotorID, int turningMotorID, boolean reversed, double offset) {
         this.driveMotor = new CANSparkMax(driveMotorID, MotorType.kBrushless);
-        this.turningMotor = new CANSparkMax(turningMotorID, MotorType.kBrushless);
-
         driveMotor.restoreFactoryDefaults();
-        turningMotor.restoreFactoryDefaults();
 
+        this.turningMotor = new CANSparkMax(turningMotorID, MotorType.kBrushless);
+        turningMotor.restoreFactoryDefaults();
         turningMotor.setInverted(reversed);
 
         this.driveEncoder = driveMotor.getEncoder();
-
         driveEncoder.setPositionConversionFactor(ModuleConstants.driveRotToMetre);
         driveEncoder.setVelocityConversionFactor(ModuleConstants.driveRPMToMetresPerSecond);
 
         this.turningEncoder = turningMotor.getEncoder();
-        
         turningEncoder.setPositionConversionFactor(ModuleConstants.turningRotToWheelDegree);
         turningEncoder.setVelocityConversionFactor(ModuleConstants.turningRPMToDegreePerSecond);
 
@@ -53,21 +50,26 @@ public class SwerveModule extends SubsystemBase {
         turningPID.setIntegratorRange(-0.01, 0.01);
         turningEncoder.setPosition(getAbsoluteEncoderDeg());
 
-        SmartDashboard.putData(turningPID);
+        resetEncoders();
     }
 
+    /**
+     * 
+     * @return Drive Encoder Postion in Metres
+     */
     public double getDrivePosition() {
         return driveEncoder.getPosition();
     }
 
-    public void resetDriveEncoder() {
-        driveEncoder.setPosition(0);
-    }
-
+    /**
+     * @return Raw Integrated Turning Encoder
+     */
     public double getTurningPosition() {
         return turningEncoder.getPosition();
     }
-
+    /**
+     * @return Integrated Turning Encoder in degrees (0-360)
+     */
     public double getTurningEncoderDegree() {
         //typecasting for integer division
         int divisor = (int)turningEncoder.getPosition() / 360;
@@ -78,12 +80,10 @@ public class SwerveModule extends SubsystemBase {
           return turningEncoder.getPosition() - (divisor - 1.0) * 360;
         }
       } 
-
-    public double getSpeed() {
-        return driveMotor.get();
-    }
     
-    //make constant for
+    /**
+     * @return Drive Encoder position in Metres per Second
+     */
     public double getDriveVelocity() {
         return driveEncoder.getVelocity();
     }
@@ -92,10 +92,9 @@ public class SwerveModule extends SubsystemBase {
         return turningEncoder.getVelocity();
     }
 
-    public double getAbsoluteEncoderRadians() {
-        return absEncoder.getPosition() * Conversion.degToRad;
-    }
-
+    /**
+     * @return Absolute Encoder in degrees (0-360)
+     */
     public double getAbsoluteEncoderDeg() {
         if (absEncoder.getPosition() - absEncoderOffset < 0) {
           return absEncoder.getPosition() + 360 - absEncoderOffset;
@@ -104,8 +103,23 @@ public class SwerveModule extends SubsystemBase {
         }
       }
 
+    public void resetEncoders() {
+        driveEncoder.setPosition(0);
+        turningEncoder.setPosition(getAbsoluteEncoderDeg());
+    }
+
     public SwerveModuleState getState() {
-        return new SwerveModuleState(getDriveVelocity(), new Rotation2d(getTurningPosition()));
+        return new SwerveModuleState(getDriveVelocity(), new Rotation2d(getAbsoluteEncoderDeg() * Conversion.degToRad));
+    }
+
+    public void setDesiredState(SwerveModuleState state) {
+        if (Math.abs(state.speedMetersPerSecond) < 0.001) {
+            stop();
+            return;
+        }
+        state = SwerveModuleState.optimize(state, getState().angle);
+        driveMotor.set(state.speedMetersPerSecond / ModuleConstants.freeSpeedMpS);
+        turningMotor.set(turningPID.calculate(getAbsoluteEncoderDeg(), state.angle.getDegrees()));
     }
 
     public void stop() {
@@ -113,10 +127,7 @@ public class SwerveModule extends SubsystemBase {
         turningMotor.set(0);
     }
 
-    public void setDriveSpeedMpS(double speed) {
-        driveMotor.set(speed / ModuleConstants.freeSpeedMpS);
-    }
-
+    //Methods for individual module PID tuning
     public void setTurningSpeed(double speed) {
         turningMotor.set(speed);
     }

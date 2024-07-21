@@ -7,46 +7,29 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import frc.robot.Constants.ModuleConstants;
-import frc.robot.commands.DisplayValues;
-import frc.robot.commands.PIDTuning;
-import frc.robot.subsystems.SwerveModule;
+import frc.robot.commands.SwerveJoystick;
+import frc.robot.subsystems.SwerveSubsystem;
 
 public class RobotContainer {
   private final CommandXboxController driver = new CommandXboxController(0);
 
-  private final SwerveModule frontLeft = new SwerveModule(
-    ModuleConstants.frontLeftDriveCANID, 
-    ModuleConstants.frontLeftTurningCANID, 
-    true, 
-    ModuleConstants.frontLeftAbsoluteOffset);
-
-  private final SwerveModule frontRight = new SwerveModule(
-    ModuleConstants.frontRightDriveCANID, 
-    ModuleConstants.frontRightTurningCANID, 
-    true, 
-    ModuleConstants.frontRightAbsoluteOffset);
-  
-  private final SwerveModule backLeft = new SwerveModule(
-    ModuleConstants.backLeftDriveCANID, 
-    ModuleConstants.backLeftTurningCANID, 
-    true, 
-    ModuleConstants.backLeftAbsoluteOffset);
-
-  private final SwerveModule backRight = new SwerveModule(
-    ModuleConstants.backRightDriveCANID, 
-    ModuleConstants.backRightTurningCANID, 
-    true, 
-    ModuleConstants.backRightAbsoluteOffset);
+  private final SwerveSubsystem swerve = new SwerveSubsystem();
 
   public RobotContainer() {
+    swerve.setDefaultCommand(new SwerveJoystick(
+      swerve, 
+      () -> -driver.getLeftY(), 
+      () -> driver.getLeftX(), 
+      () -> driver.getRightX(), 
+      () -> !driver.getHID().getAButton()));
+
     configureBindings();
   }
 
   private void configureBindings() {
-    driver.a().whileTrue(new PIDTuning(frontRight, 0));
-    driver.start().onFalse(new DisplayValues(frontLeft, frontRight, backLeft, backRight).ignoringDisable(true));    
+    driver.b().onTrue(new InstantCommand(swerve::zeroHeading));
   }
 
   public Command getAutonomousCommand() {

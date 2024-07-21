@@ -4,11 +4,17 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.util.Units;
+
 /** Add your docs here. */
 public final class Constants {
 
     public static final class ModuleConstants {
         public static final double freeSpeedMpS = 4.60248;
+        //from testing
+        public static final double maxDegreeperSecond = 5851;
         public static final double voltToDegree = 360.0 / 3.3;
         public static final double driveRotToMetre = 14.0/50.0 * 27.0/17.0 * 15.0/45.0 * 4 * Math.PI / 39.3;
         public static final double driveRPMToMetresPerSecond = driveRotToMetre / 60.0;
@@ -40,11 +46,25 @@ public final class Constants {
         public static final double backRightTurningkI = 0.05;
     }
 
+    public static final class DriveConstants {
+        //FIX
+        public static final int pigeonCANID = 12;
+        public static final double kTrackwidth = Units.inchesToMeters(23.75);
+
+        //FL, FR, BL, BR
+        public static final SwerveDriveKinematics kDriveKinematics = new SwerveDriveKinematics(
+            new Translation2d(kTrackwidth / 2.0, -kTrackwidth / 2.0),
+            new Translation2d(kTrackwidth / 2.0, kTrackwidth / 2.0),
+            new Translation2d(-kTrackwidth / 2.0, -kTrackwidth / 2.0),
+            new Translation2d(-kTrackwidth / 2.0, kTrackwidth / 2.0));
+    }
+
     public static final class Conversion {
         public static final double degToRad = Math.PI / 180.0;
     }
 
     public static final class Misc {
         public static final boolean tuningMode = true;
+        public static final double kDeadband = 0.02;
     }
 }
