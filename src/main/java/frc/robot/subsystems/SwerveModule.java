@@ -5,8 +5,10 @@ import com.revrobotics.RelativeEncoder;
 import com.revrobotics.SparkAnalogSensor;
 import com.revrobotics.CANSparkLowLevel.MotorType;
 
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.Conversion;
 import frc.robot.Constants.ModuleConstants;
@@ -14,6 +16,8 @@ import frc.robot.Constants.ModuleConstants;
 public class SwerveModule extends SubsystemBase {
     private final CANSparkMax driveMotor, turningMotor;
     private final RelativeEncoder driveEncoder, turningEncoder;
+
+    private final PIDController turningPID;
 
     private final SparkAnalogSensor absEncoder;
     private final double absEncoderOffset;
@@ -29,7 +33,7 @@ public class SwerveModule extends SubsystemBase {
 
         this.driveEncoder = driveMotor.getEncoder();
 
-        driveEncoder.setPositionConversionFactor(ModuleConstants.driveRotToWheelRot);
+        driveEncoder.setPositionConversionFactor(ModuleConstants.driveRotToMetre);
         driveEncoder.setVelocityConversionFactor(ModuleConstants.driveRPMToMetresPerSecond);
 
         this.turningEncoder = turningMotor.getEncoder();
@@ -41,12 +45,23 @@ public class SwerveModule extends SubsystemBase {
         this.absEncoderOffset = offset;
 
         absEncoder.setPositionConversionFactor(ModuleConstants.voltToDegree);
-
+        
+        //kI value is only this high due to max integrator range
+        turningPID = new PIDController(0.004, 0.05, 0);
+        turningPID.enableContinuousInput(0, 360);
+        turningPID.setTolerance(0.1);
+        turningPID.setIntegratorRange(-0.01, 0.01);
         turningEncoder.setPosition(getAbsoluteEncoderDeg());
+
+        SmartDashboard.putData(turningPID);
     }
 
     public double getDrivePosition() {
         return driveEncoder.getPosition();
+    }
+
+    public void resetDriveEncoder() {
+        driveEncoder.setPosition(0);
     }
 
     public double getTurningPosition() {
@@ -104,5 +119,21 @@ public class SwerveModule extends SubsystemBase {
 
     public void setTurningSpeed(double speed) {
         turningMotor.set(speed);
+    }
+
+    public double turningPIDCalculate(double measurement) {
+        return turningPID.calculate(measurement);
+    }
+
+    public void setPIDSetpoint(double setpoint) {
+        turningPID.setSetpoint(setpoint);
+    }
+
+    public double getPIDsetpoint() {
+        return turningPID.getSetpoint();
+    }
+
+    public double getPIDError() {
+        return turningPID.getPositionError();
     }
 }

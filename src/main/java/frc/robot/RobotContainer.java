@@ -45,9 +45,8 @@ public class RobotContainer {
   }
 
   private void configureBindings() {
-    driver.a().whileTrue(new PIDTuning(backRight, 0));
-    driver.start().onFalse(new DisplayValues(frontLeft, frontRight, backLeft, backRight).ignoringDisable(true));
-    
+    driver.a().whileTrue(new PIDTuning(frontRight, 0));
+    driver.start().onFalse(new DisplayValues(frontLeft, frontRight, backLeft, backRight).ignoringDisable(true));    
   }
 
   public Command getAutonomousCommand() {
