@@ -11,6 +11,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.Constants.Conversion;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.Misc;
 import frc.robot.Constants.ModuleConstants;
@@ -62,8 +63,8 @@ public class SwerveJoystick extends Command {
     turningSpeed = Math.abs(turningSpeed) > Misc.kDeadband ? turningSpeed : 0.0;
 
     xSpeed = xLimiter.calculate(xSpeed) * ModuleConstants.freeSpeedMpS / 4.0;
-    ySpeed = yLimiter.calculate(ySpeed) * ModuleConstants.maxDegreeperSecond / 4.0;
-    turningSpeed = turningLimiter.calculate(turningSpeed);
+    ySpeed = yLimiter.calculate(ySpeed) * ModuleConstants.freeSpeedMpS / 4.0;
+    turningSpeed = turningLimiter.calculate(turningSpeed) * ModuleConstants.maxDegreeperSecond * Conversion.degToRad / 4.0;
 
     ChassisSpeeds chassisSpeeds;
     if (fieldOriented.get()) {

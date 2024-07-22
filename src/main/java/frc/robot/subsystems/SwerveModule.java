@@ -71,14 +71,7 @@ public class SwerveModule extends SubsystemBase {
      * @return Integrated Turning Encoder in degrees (0-360)
      */
     public double getTurningEncoderDegree() {
-        //typecasting for integer division
-        int divisor = (int)turningEncoder.getPosition() / 360;
-        
-        if (turningEncoder.getPosition() > 0) {
-          return turningEncoder.getPosition() - divisor * 360;
-        } else {
-          return turningEncoder.getPosition() - (divisor - 1.0) * 360;
-        }
+        return Math.IEEEremainder(turningEncoder.getPosition(), 360);
       } 
     
     /**
@@ -96,10 +89,12 @@ public class SwerveModule extends SubsystemBase {
      * @return Absolute Encoder in degrees (0-360)
      */
     public double getAbsoluteEncoderDeg() {
-        if (absEncoder.getPosition() - absEncoderOffset < 0) {
-          return absEncoder.getPosition() + 360 - absEncoderOffset;
+        if (absEncoder.getPosition() - absEncoderOffset < 180 && absEncoder.getPosition() > -180) {
+            return absEncoder.getPosition() - absEncoderOffset;
+        } else if (absEncoder.getPosition() < -180){
+            return absEncoder.getPosition() - absEncoderOffset + 360;
         } else {
-          return absEncoder.getPosition() - absEncoderOffset;
+            return absEncoder.getPosition() - absEncoderOffset - 360;
         }
       }
 

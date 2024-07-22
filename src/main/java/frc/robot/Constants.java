@@ -65,6 +65,6 @@ public final class Constants {
 
     public static final class Misc {
         public static final boolean tuningMode = true;
-        public static final double kDeadband = 0.02;
+        public static final double kDeadband = 0.04;
     }
 }
