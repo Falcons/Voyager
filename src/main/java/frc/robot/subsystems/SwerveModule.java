@@ -48,9 +48,10 @@ public class SwerveModule extends SubsystemBase {
         
         //kI value is only this high due to max integrator range
         turningPID = new PIDController(0.004, 0.05, 0);
-        turningPID.enableContinuousInput(0, 360);
+        turningPID.enableContinuousInput(-180, 180);
         turningPID.setTolerance(0.1);
         turningPID.setIntegratorRange(-0.01, 0.01);
+        
         turningEncoder.setPosition(getAbsoluteEncoderDeg());
 
         SmartDashboard.putData(turningPID);
@@ -69,21 +70,13 @@ public class SwerveModule extends SubsystemBase {
     }
 
     public double getTurningEncoderDegree() {
-        //typecasting for integer division
-        int divisor = (int)turningEncoder.getPosition() / 360;
-        
-        if (turningEncoder.getPosition() > 0) {
-          return turningEncoder.getPosition() - divisor * 360;
-        } else {
-          return turningEncoder.getPosition() - (divisor - 1.0) * 360;
-        }
+        return Math.IEEEremainder(turningEncoder.getPosition(), 360);
       } 
 
     public double getSpeed() {
         return driveMotor.get();
     }
     
-    //make constant for
     public double getDriveVelocity() {
         return driveEncoder.getVelocity();
     }
@@ -97,10 +90,12 @@ public class SwerveModule extends SubsystemBase {
     }
 
     public double getAbsoluteEncoderDeg() {
-        if (absEncoder.getPosition() - absEncoderOffset < 0) {
-          return absEncoder.getPosition() + 360 - absEncoderOffset;
+        if (absEncoder.getPosition() - absEncoderOffset < 180 && absEncoder.getPosition() > -180) {
+            return absEncoder.getPosition() - absEncoderOffset;
+        } else if (absEncoder.getPosition() < -180){
+            return absEncoder.getPosition() - absEncoderOffset + 360;
         } else {
-          return absEncoder.getPosition() - absEncoderOffset;
+            return absEncoder.getPosition() - absEncoderOffset - 360;
         }
       }
 
@@ -135,5 +130,14 @@ public class SwerveModule extends SubsystemBase {
 
     public double getPIDError() {
         return turningPID.getPositionError();
+    }
+
+    public boolean getAtSetpoint() {
+        return turningPID.atSetpoint();
+    }
+
+    public void resetEncoders() {
+        driveEncoder.setPosition(0);
+        turningEncoder.setPosition(getAbsoluteEncoderDeg());
     }
 }

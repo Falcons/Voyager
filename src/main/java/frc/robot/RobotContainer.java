@@ -5,12 +5,15 @@
 package frc.robot;
 
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.ModuleConstants;
 import frc.robot.commands.DisplayValues;
 import frc.robot.commands.PIDTuning;
+import frc.robot.commands.ZeroModule;
 import frc.robot.subsystems.SwerveModule;
 
 public class RobotContainer {
@@ -41,11 +44,17 @@ public class RobotContainer {
     ModuleConstants.backRightAbsoluteOffset);
 
   public RobotContainer() {
+    SmartDashboard.putData(new InstantCommand());
     configureBindings();
   }
 
   private void configureBindings() {
-    driver.a().whileTrue(new PIDTuning(frontRight, 0));
+    driver.a().whileTrue(new PIDTuning(backRight));
+    driver.x().onTrue(
+      new ZeroModule(frontLeft)
+      .alongWith(new ZeroModule(frontRight))
+      .alongWith(new ZeroModule(backLeft))
+      .alongWith(new ZeroModule(backRight)));
     driver.start().onFalse(new DisplayValues(frontLeft, frontRight, backLeft, backRight).ignoringDisable(true));    
   }
 

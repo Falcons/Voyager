@@ -8,10 +8,10 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.SwerveModule;
 
-public class PIDTuning extends Command {
-  SwerveModule module;
+public class ZeroModule extends Command {
+  private final SwerveModule module;
 
-  public PIDTuning(SwerveModule module) {
+  public ZeroModule(SwerveModule module) {
     this.module = module;
   }
 
@@ -19,12 +19,13 @@ public class PIDTuning extends Command {
   @Override
   public void initialize() {
     System.out.println("PIDTuning Start");
+    module.setPIDSetpoint(0);
   }
 
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    double speed = module.turningPIDCalculate(module.getAbsoluteEncoderDeg());//pid.calculate(module.getAbsoluteEncoderDeg());
+    double speed = module.turningPIDCalculate(module.getAbsoluteEncoderDeg());
     if (speed < 0.5 && speed > -0.5) {
       module.setTurningSpeed(speed);
     } else {
@@ -46,6 +47,6 @@ public class PIDTuning extends Command {
   // Returns true when the command should end.
   @Override
   public boolean isFinished() {
-    return false;
+    return module.getAtSetpoint();
   }
 }
