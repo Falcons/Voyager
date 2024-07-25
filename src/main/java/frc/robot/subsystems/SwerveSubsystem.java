@@ -9,9 +9,15 @@ import com.ctre.phoenix6.hardware.Pigeon2;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructArrayPublisher;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants.Conversion;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.ModuleConstants;
 
@@ -40,7 +46,6 @@ public class SwerveSubsystem extends SubsystemBase {
     true, 
     ModuleConstants.backRightAbsoluteOffset);
   
-  //FIXXXX
   private final Pigeon2 gyro = new Pigeon2(DriveConstants.pigeonCANID);
 
   public SwerveSubsystem() {
@@ -52,12 +57,12 @@ public class SwerveSubsystem extends SubsystemBase {
       } catch (Exception e) {
       }
     }).start();
-    
   }
 
   @Override
   public void periodic() {
     SmartDashboard.putNumber("Robot Heading", getHeading());
+    SmartDashboard.putNumber("Robot Heading Radians", getRotation2d().getRadians());
 
     SmartDashboard.putNumber("Front Left Speed", frontLeft.getState().speedMetersPerSecond);
     SmartDashboard.putNumber("Front Right Speed", frontRight.getState().speedMetersPerSecond);
@@ -79,7 +84,7 @@ public class SwerveSubsystem extends SubsystemBase {
   }
 
   public Rotation2d getRotation2d() {
-    return Rotation2d.fromDegrees(getHeading());
+    return gyro.getRotation2d();
   }
 
   public void stopModules() {
@@ -90,7 +95,7 @@ public class SwerveSubsystem extends SubsystemBase {
   }
 
   public void setModuleStates(SwerveModuleState[] desiredStates) {
-    SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, ModuleConstants.freeSpeedMpS);
+    SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, ModuleConstants.driveFreeSpeedMPS);
     frontLeft.setDesiredState(desiredStates[0]);
     frontRight.setDesiredState(desiredStates[1]);
     backLeft.setDesiredState(desiredStates[2]);

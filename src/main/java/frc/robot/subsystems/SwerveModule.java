@@ -8,7 +8,6 @@ import com.revrobotics.CANSparkLowLevel.MotorType;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.Conversion;
 import frc.robot.Constants.ModuleConstants;
@@ -104,6 +103,7 @@ public class SwerveModule extends SubsystemBase {
     }
 
     public SwerveModuleState getState() {
+        //angle must be in radians
         return new SwerveModuleState(getDriveVelocity(), new Rotation2d(getAbsoluteEncoderDeg() * Conversion.degToRad));
     }
 
@@ -113,33 +113,12 @@ public class SwerveModule extends SubsystemBase {
             return;
         }
         state = SwerveModuleState.optimize(state, getState().angle);
-        driveMotor.set(state.speedMetersPerSecond / ModuleConstants.freeSpeedMpS);
+        driveMotor.set(state.speedMetersPerSecond / ModuleConstants.driveFreeSpeedMPS);
         turningMotor.set(turningPID.calculate(getAbsoluteEncoderDeg(), state.angle.getDegrees()));
     }
 
     public void stop() {
         driveMotor.set(0);
         turningMotor.set(0);
-    }
-
-    //Methods for individual module PID tuning
-    public void setTurningSpeed(double speed) {
-        turningMotor.set(speed);
-    }
-
-    public double turningPIDCalculate(double measurement) {
-        return turningPID.calculate(measurement);
-    }
-
-    public void setPIDSetpoint(double setpoint) {
-        turningPID.setSetpoint(setpoint);
-    }
-
-    public double getPIDsetpoint() {
-        return turningPID.getSetpoint();
-    }
-
-    public double getPIDError() {
-        return turningPID.getPositionError();
     }
 }

@@ -21,8 +21,8 @@ public class RobotContainer {
     swerve.setDefaultCommand(new SwerveJoystick(
       swerve, 
       () -> -driver.getLeftY(), 
-      () -> driver.getLeftX(), 
-      () -> driver.getRightX(), 
+      () -> -driver.getLeftX(), 
+      () -> -driver.getRightX(), 
       () -> !driver.getHID().getAButton()));
 
     configureBindings();

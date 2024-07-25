@@ -9,6 +9,8 @@ import java.util.function.Supplier;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.Conversion;
@@ -23,6 +25,8 @@ public class SwerveJoystick extends Command {
   private final Supplier<Double> xSpeedFunc, ySpeedFunc, turningSpeedFunc;
   private final Supplier<Boolean> fieldOriented;
   private final SlewRateLimiter xLimiter, yLimiter, turningLimiter;
+  StructArrayPublisher<SwerveModuleState> publisher = NetworkTableInstance.getDefault().getStructArrayTopic("SwerveStates", SwerveModuleState.struct).publish();
+
   public SwerveJoystick(
     SwerveSubsystem swerveSubsystem, 
     Supplier<Double> xSpd, 
@@ -60,11 +64,12 @@ public class SwerveJoystick extends Command {
 
     xSpeed = Math.abs(xSpeed) > Misc.kDeadband ? xSpeed : 0.0;
     ySpeed = Math.abs(ySpeed) > Misc.kDeadband ? ySpeed : 0.0;
-    turningSpeed = Math.abs(turningSpeed) > Misc.kDeadband ? turningSpeed : 0.0;
+    turningSpeed = Math.abs(turningSpeed) > 0.1 ? turningSpeed : 0.0;
 
-    xSpeed = xLimiter.calculate(xSpeed) * ModuleConstants.freeSpeedMpS / 4.0;
-    ySpeed = yLimiter.calculate(ySpeed) * ModuleConstants.freeSpeedMpS / 4.0;
-    turningSpeed = turningLimiter.calculate(turningSpeed) * ModuleConstants.maxDegreeperSecond * Conversion.degToRad / 4.0;
+    // 15% of max speed
+    xSpeed = xLimiter.calculate(xSpeed) * ModuleConstants.driveFreeSpeedMPS * 0.15;
+    ySpeed = yLimiter.calculate(ySpeed) * ModuleConstants.driveFreeSpeedMPS * 0.15;
+    turningSpeed = turningLimiter.calculate(turningSpeed) * ModuleConstants.turningFreeSpeedRadianPerSecond * 0.15;
 
     ChassisSpeeds chassisSpeeds;
     if (fieldOriented.get()) {
@@ -75,10 +80,14 @@ public class SwerveJoystick extends Command {
 
     SwerveModuleState[] moduleStates = DriveConstants.kDriveKinematics.toSwerveModuleStates(chassisSpeeds);
 
+    publisher.set(moduleStates);
+
+    SmartDashboard.putNumber("Xspeed", xSpeed);
+    SmartDashboard.putNumber("ySpeed", ySpeed);
     SmartDashboard.putNumber("Back Right Set Speed", moduleStates[3].speedMetersPerSecond);
     SmartDashboard.putNumber("Back Right Set Angle", moduleStates[3].angle.getDegrees());
     
-    //swerveSubsystem.setModuleStates(moduleStates);
+    swerveSubsystem.setModuleStates(moduleStates);
   }
 
   // Called once the command ends or is interrupted.
