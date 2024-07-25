@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.robot.Constants.DriveConstants;
 import frc.robot.commands.SwerveJoystick;
 import frc.robot.subsystems.SwerveSubsystem;
 
@@ -30,6 +31,7 @@ public class RobotContainer {
 
   private void configureBindings() {
     driver.b().onTrue(new InstantCommand(swerve::zeroHeading));
+    driver.x().onTrue(new InstantCommand(() -> swerve.resetPose(DriveConstants.noteBlueCloseAmp)));
   }
 
   public Command getAutonomousCommand() {

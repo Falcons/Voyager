@@ -25,7 +25,7 @@ public class SwerveJoystick extends Command {
   private final Supplier<Double> xSpeedFunc, ySpeedFunc, turningSpeedFunc;
   private final Supplier<Boolean> fieldOriented;
   private final SlewRateLimiter xLimiter, yLimiter, turningLimiter;
-  StructArrayPublisher<SwerveModuleState> publisher = NetworkTableInstance.getDefault().getStructArrayTopic("SwerveStates", SwerveModuleState.struct).publish();
+  StructArrayPublisher<SwerveModuleState> publisher = NetworkTableInstance.getDefault().getStructArrayTopic("SwerveStates/Commanded", SwerveModuleState.struct).publish();
 
   public SwerveJoystick(
     SwerveSubsystem swerveSubsystem, 
@@ -81,11 +81,6 @@ public class SwerveJoystick extends Command {
     SwerveModuleState[] moduleStates = DriveConstants.kDriveKinematics.toSwerveModuleStates(chassisSpeeds);
 
     publisher.set(moduleStates);
-
-    SmartDashboard.putNumber("Xspeed", xSpeed);
-    SmartDashboard.putNumber("ySpeed", ySpeed);
-    SmartDashboard.putNumber("Back Right Set Speed", moduleStates[3].speedMetersPerSecond);
-    SmartDashboard.putNumber("Back Right Set Angle", moduleStates[3].angle.getDegrees());
     
     swerveSubsystem.setModuleStates(moduleStates);
   }

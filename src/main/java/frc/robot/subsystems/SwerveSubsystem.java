@@ -10,10 +10,12 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
+import edu.wpi.first.math.kinematics.SwerveDriveWheelPositions;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -48,6 +50,17 @@ public class SwerveSubsystem extends SubsystemBase {
   
   private final Pigeon2 gyro = new Pigeon2(DriveConstants.pigeonCANID);
 
+  private final SwerveDriveOdometry odometry = new SwerveDriveOdometry(
+    DriveConstants.kDriveKinematics, 
+    getRotation2d(), 
+    getModulePositions(), 
+    new Pose2d());
+
+  private final Field2d field = new Field2d();
+
+  StructArrayPublisher<SwerveModuleState> statePublisher = NetworkTableInstance.getDefault().getStructArrayTopic("SwerveStates/Actual", SwerveModuleState.struct).publish();
+  StructPublisher<Pose2d> posPublisher = NetworkTableInstance.getDefault().getStructTopic("SwervePose/Actual", Pose2d.struct).publish();
+
   public SwerveSubsystem() {
     //copied from 0toAuto swerve video, waits 1 second for gyro cal. to zero heading
     new Thread(() -> {
@@ -57,22 +70,28 @@ public class SwerveSubsystem extends SubsystemBase {
       } catch (Exception e) {
       }
     }).start();
+
+    resetPose(new Pose2d());
   }
 
   @Override
   public void periodic() {
+    statePublisher.set(getModuleState());
+    posPublisher.set(odometry.getPoseMeters());
+
+    updateOdometry();
+
+    field.setRobotPose(odometry.getPoseMeters());
+
+    SmartDashboard.putData(field);
     SmartDashboard.putNumber("Robot Heading", getHeading());
     SmartDashboard.putNumber("Robot Heading Radians", getRotation2d().getRadians());
-
-    SmartDashboard.putNumber("Front Left Speed", frontLeft.getState().speedMetersPerSecond);
-    SmartDashboard.putNumber("Front Right Speed", frontRight.getState().speedMetersPerSecond);
-    SmartDashboard.putNumber("Back Left Speed", backLeft.getState().speedMetersPerSecond);
-    SmartDashboard.putNumber("Back Right Speed", backRight.getState().speedMetersPerSecond);
 
     SmartDashboard.putNumber("Front Left Angle", frontLeft.getState().angle.getDegrees());
     SmartDashboard.putNumber("Front Right Angle", frontRight.getState().angle.getDegrees());
     SmartDashboard.putNumber("Back Left Angle", backLeft.getState().angle.getDegrees());
     SmartDashboard.putNumber("Back Right Angle", backRight.getState().angle.getDegrees());
+
   }
 
   public void zeroHeading() {
@@ -100,5 +119,31 @@ public class SwerveSubsystem extends SubsystemBase {
     frontRight.setDesiredState(desiredStates[1]);
     backLeft.setDesiredState(desiredStates[2]);
     backRight.setDesiredState(desiredStates[3]);
+  }
+
+  public SwerveModuleState[] getModuleState() {
+    return new SwerveModuleState[] {
+      frontLeft.getState(),
+      frontRight.getState(),
+      backLeft.getState(),
+      backRight.getState()
+    };
+  }
+
+  public void updateOdometry() {
+    odometry.update(getRotation2d(), getModulePositions());
+  }
+
+  public void resetPose(Pose2d pose) {
+    odometry.resetPosition(getRotation2d(), getModulePositions(), pose);
+  }
+
+  public SwerveModulePosition[] getModulePositions() {
+    return new SwerveModulePosition[] {
+      frontLeft.getPosition(),
+      frontRight.getPosition(),
+      backLeft.getPosition(),
+      backRight.getPosition()
+    };
   }
 }

@@ -7,6 +7,7 @@ import com.revrobotics.CANSparkLowLevel.MotorType;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.Conversion;
@@ -115,6 +116,10 @@ public class SwerveModule extends SubsystemBase {
         state = SwerveModuleState.optimize(state, getState().angle);
         driveMotor.set(state.speedMetersPerSecond / ModuleConstants.driveFreeSpeedMPS);
         turningMotor.set(turningPID.calculate(getAbsoluteEncoderDeg(), state.angle.getDegrees()));
+    }
+
+    public SwerveModulePosition getPosition() {
+        return new SwerveModulePosition(getDrivePosition(), getState().angle);
     }
 
     public void stop() {

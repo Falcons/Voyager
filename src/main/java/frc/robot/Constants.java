@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.util.Units;
@@ -75,6 +77,8 @@ public final class Constants {
             new Translation2d(kTrackwidth / 2.0, -kTrackwidth / 2.0),
             new Translation2d(-kTrackwidth / 2.0, kTrackwidth / 2.0),
             new Translation2d(-kTrackwidth / 2.0, -kTrackwidth / 2.0));
+
+        public static final Pose2d noteBlueCloseAmp = new Pose2d(Units.inchesToMeters(114.0), Units.inchesToMeters(275.42), new Rotation2d());
     }
 
     public static final class Conversion {
