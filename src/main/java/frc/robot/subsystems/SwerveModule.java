@@ -9,11 +9,12 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants.Conversion;
 import frc.robot.Constants.ModuleConstants;
 
-public class SwerveModule extends SubsystemBase {
+public class SwerveModule {
+    public final String moduleName;
     private final CANSparkMax driveMotor, turningMotor;
     private final RelativeEncoder driveEncoder, turningEncoder;
 
@@ -22,7 +23,8 @@ public class SwerveModule extends SubsystemBase {
     private final SparkAnalogSensor absEncoder;
     private final double absEncoderOffset;
 
-    public SwerveModule(int driveMotorID, int turningMotorID, boolean reversed, double offset) {
+    public SwerveModule(String name, int driveMotorID, int turningMotorID, boolean reversed, double offset) {
+        this.moduleName = name;
         this.driveMotor = new CANSparkMax(driveMotorID, MotorType.kBrushless);
         driveMotor.restoreFactoryDefaults();
 
@@ -50,6 +52,8 @@ public class SwerveModule extends SubsystemBase {
         turningPID.setIntegratorRange(-0.01, 0.01);
         turningEncoder.setPosition(getAbsoluteEncoderDeg());
 
+        SmartDashboard.putData("TurningPID/" + this.moduleName, this.turningPID);
+
         resetEncoders();
     }
 
@@ -68,7 +72,7 @@ public class SwerveModule extends SubsystemBase {
         return turningEncoder.getPosition();
     }
     /**
-     * @return Integrated Turning Encoder in degrees (0-360)
+     * @return Integrated Turning Encoder in degrees (-180 to 180) CCW+
      */
     public double getTurningEncoderDegree() {
         return Math.IEEEremainder(turningEncoder.getPosition(), 360);
@@ -86,7 +90,7 @@ public class SwerveModule extends SubsystemBase {
     }
 
     /**
-     * @return Absolute Encoder in degrees (0-360)
+     * @return Absolute Encoder in degrees (-180 to 180) CCW+
      */
     public double getAbsoluteEncoderDeg() {
         if (absEncoder.getPosition() - absEncoderOffset < 180 && absEncoder.getPosition() > -180) {
@@ -125,5 +129,14 @@ public class SwerveModule extends SubsystemBase {
     public void stop() {
         driveMotor.set(0);
         turningMotor.set(0);
+    }
+
+    //PID Controller is already printed to dashboard, values can be changed live
+    public void pidTuning() {
+        turningMotor.set(turningPID.calculate(getAbsoluteEncoderDeg()));
+    }
+
+    public void pidReset() {
+        turningPID.reset();
     }
 }

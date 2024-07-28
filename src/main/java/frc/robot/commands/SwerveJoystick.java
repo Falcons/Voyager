@@ -13,7 +13,6 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.Constants.Conversion;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.Misc;
 import frc.robot.Constants.ModuleConstants;

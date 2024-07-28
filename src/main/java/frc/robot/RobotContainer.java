@@ -5,6 +5,7 @@
 package frc.robot;
 
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -19,19 +20,28 @@ public class RobotContainer {
   private final SwerveSubsystem swerve = new SwerveSubsystem();
 
   public RobotContainer() {
+    /*
     swerve.setDefaultCommand(new SwerveJoystick(
       swerve, 
       () -> -driver.getLeftY(), 
       () -> -driver.getLeftX(), 
       () -> -driver.getRightX(), 
-      () -> !driver.getHID().getAButton()));
+      () -> !driver.getHID().getLeftBumper()));
+    */
 
     configureBindings();
+
+    SmartDashboard.putData("Set Pose", new InstantCommand(() -> swerve.resetPose(DriveConstants.noteBlueCloseAmp)));
+    SmartDashboard.putData("Swerve Subsystem", swerve);
   }
 
   private void configureBindings() {
     driver.b().onTrue(new InstantCommand(swerve::zeroHeading));
-    driver.x().onTrue(new InstantCommand(() -> swerve.resetPose(DriveConstants.noteBlueCloseAmp)));
+
+    driver.povUpLeft().whileTrue(swerve.pidTuningFunc("Front Left"));
+    driver.povUpRight().whileTrue(swerve.pidTuningFunc("Front Right"));
+    driver.povDownLeft().whileTrue(swerve.pidTuningFunc("Back Left"));
+    driver.povDownRight().whileTrue(swerve.pidTuningFunc("Back Right"));
   }
 
   public Command getAutonomousCommand() {

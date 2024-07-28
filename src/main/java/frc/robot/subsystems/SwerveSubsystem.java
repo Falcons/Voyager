@@ -4,13 +4,16 @@
 
 package frc.robot.subsystems;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.ctre.phoenix6.hardware.Pigeon2;
 
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
-import edu.wpi.first.math.kinematics.SwerveDriveWheelPositions;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -18,35 +21,55 @@ import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.FunctionalCommand;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants.Conversion;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.ModuleConstants;
 
 public class SwerveSubsystem extends SubsystemBase {
   private final SwerveModule frontLeft = new SwerveModule(
+    "Front Left",
     ModuleConstants.frontLeftDriveCANID, 
     ModuleConstants.frontLeftTurningCANID, 
     true, 
     ModuleConstants.frontLeftAbsoluteOffset);
 
   private final SwerveModule frontRight = new SwerveModule(
+    "Front Right",
     ModuleConstants.frontRightDriveCANID, 
     ModuleConstants.frontRightTurningCANID, 
     true, 
     ModuleConstants.frontRightAbsoluteOffset);
   
   private final SwerveModule backLeft = new SwerveModule(
+    "Back Left",
     ModuleConstants.backLeftDriveCANID, 
     ModuleConstants.backLeftTurningCANID, 
     true, 
     ModuleConstants.backLeftAbsoluteOffset);
 
   private final SwerveModule backRight = new SwerveModule(
+    "Back Right",
     ModuleConstants.backRightDriveCANID, 
     ModuleConstants.backRightTurningCANID, 
     true, 
     ModuleConstants.backRightAbsoluteOffset);
+
+  SwerveModule[] modules = new SwerveModule[] {
+    frontLeft,
+    frontRight,
+    backLeft,
+    backRight
+  };
+
+  public Map<String, SwerveModule> swerveMap = Map.of(
+    "Front Left", frontLeft, 
+    "Front Right", frontRight,
+    "Back Left", backLeft,
+    "Back Right", backRight);
+  
   
   private final Pigeon2 gyro = new Pigeon2(DriveConstants.pigeonCANID);
 
@@ -72,6 +95,7 @@ public class SwerveSubsystem extends SubsystemBase {
     }).start();
 
     resetPose(new Pose2d());
+    
   }
 
   @Override
@@ -87,10 +111,15 @@ public class SwerveSubsystem extends SubsystemBase {
     SmartDashboard.putNumber("Robot Heading", getHeading());
     SmartDashboard.putNumber("Robot Heading Radians", getRotation2d().getRadians());
 
+    /*
     SmartDashboard.putNumber("Front Left Angle", frontLeft.getState().angle.getDegrees());
     SmartDashboard.putNumber("Front Right Angle", frontRight.getState().angle.getDegrees());
     SmartDashboard.putNumber("Back Left Angle", backLeft.getState().angle.getDegrees());
     SmartDashboard.putNumber("Back Right Angle", backRight.getState().angle.getDegrees());
+    */
+    for (SwerveModule module:modules) {
+      SmartDashboard.putNumber(module.moduleName + " Angle", module.getState().angle.getDegrees());
+    }
 
   }
 
@@ -146,4 +175,36 @@ public class SwerveSubsystem extends SubsystemBase {
       backRight.getPosition()
     };
   }
+
+  public RunCommand pidTuningFL() {
+    return new RunCommand(() -> frontLeft.pidTuning(), this);
+  }
+
+  public RunCommand pidTuningFR() {
+    return new RunCommand(() -> frontRight.pidTuning(), this);
+  }
+
+  public RunCommand pidTuningBL() {
+    return new RunCommand(() -> backLeft.pidTuning(), this);
+  }
+
+  public RunCommand pidTuningBR() {
+    return new RunCommand(() -> backRight.pidTuning(), this);
+  }
+
+  public RunCommand pidTuningAll(String str) {
+    SwerveModule mod = swerveMap.get(str);
+    return new RunCommand(() -> mod.pidTuning(), this);
+  }
+
+  public FunctionalCommand pidTuningFunc(String str) {
+    SwerveModule mod = swerveMap.get(str);
+    return new FunctionalCommand(
+      mod::pidReset,
+      mod::pidTuning,
+      interrupted -> mod.stop(),
+      () -> false,
+      this);
+  }
+
 }
