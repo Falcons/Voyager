@@ -20,14 +20,12 @@ public class RobotContainer {
   private final SwerveSubsystem swerve = new SwerveSubsystem();
 
   public RobotContainer() {
-    /*
     swerve.setDefaultCommand(new SwerveJoystick(
       swerve, 
       () -> -driver.getLeftY(), 
       () -> -driver.getLeftX(), 
       () -> -driver.getRightX(), 
       () -> !driver.getHID().getLeftBumper()));
-    */
 
     configureBindings();
 
@@ -38,10 +36,10 @@ public class RobotContainer {
   private void configureBindings() {
     driver.b().onTrue(new InstantCommand(swerve::zeroHeading));
 
-    driver.povUpLeft().whileTrue(swerve.pidTuningFunc("Front Left"));
-    driver.povUpRight().whileTrue(swerve.pidTuningFunc("Front Right"));
-    driver.povDownLeft().whileTrue(swerve.pidTuningFunc("Back Left"));
-    driver.povDownRight().whileTrue(swerve.pidTuningFunc("Back Right"));
+    driver.povUpLeft().whileTrue(swerve.pidTuning("Front Left"));
+    driver.povUpRight().whileTrue(swerve.pidTuning("Front Right"));
+    driver.povDownLeft().whileTrue(swerve.pidTuning("Back Left"));
+    driver.povDownRight().whileTrue(swerve.pidTuning("Back Right"));
   }
 
   public Command getAutonomousCommand() {

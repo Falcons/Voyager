@@ -70,6 +70,7 @@ public final class Constants {
     public static final class DriveConstants {
         public static final int pigeonCANID = 12;
         public static final double kTrackwidth = Units.inchesToMeters(23.75);
+        public static final double kDeadband = 0.04;
 
         //FL, FR, BL, BR
         public static final SwerveDriveKinematics kDriveKinematics = new SwerveDriveKinematics(
@@ -83,10 +84,5 @@ public final class Constants {
 
     public static final class Conversion {
         public static final double degToRad = Math.PI / 180.0;
-    }
-
-    public static final class Misc {
-        public static final boolean tuningMode = true;
-        public static final double kDeadband = 0.04;
     }
 }

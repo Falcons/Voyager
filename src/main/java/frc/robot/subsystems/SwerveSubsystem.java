@@ -4,12 +4,10 @@
 
 package frc.robot.subsystems;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import com.ctre.phoenix6.hardware.Pigeon2;
 
-import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
@@ -21,9 +19,7 @@ import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
-import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.ModuleConstants;
@@ -111,12 +107,6 @@ public class SwerveSubsystem extends SubsystemBase {
     SmartDashboard.putNumber("Robot Heading", getHeading());
     SmartDashboard.putNumber("Robot Heading Radians", getRotation2d().getRadians());
 
-    /*
-    SmartDashboard.putNumber("Front Left Angle", frontLeft.getState().angle.getDegrees());
-    SmartDashboard.putNumber("Front Right Angle", frontRight.getState().angle.getDegrees());
-    SmartDashboard.putNumber("Back Left Angle", backLeft.getState().angle.getDegrees());
-    SmartDashboard.putNumber("Back Right Angle", backRight.getState().angle.getDegrees());
-    */
     for (SwerveModule module:modules) {
       SmartDashboard.putNumber(module.moduleName + " Angle", module.getState().angle.getDegrees());
     }
@@ -176,28 +166,7 @@ public class SwerveSubsystem extends SubsystemBase {
     };
   }
 
-  public RunCommand pidTuningFL() {
-    return new RunCommand(() -> frontLeft.pidTuning(), this);
-  }
-
-  public RunCommand pidTuningFR() {
-    return new RunCommand(() -> frontRight.pidTuning(), this);
-  }
-
-  public RunCommand pidTuningBL() {
-    return new RunCommand(() -> backLeft.pidTuning(), this);
-  }
-
-  public RunCommand pidTuningBR() {
-    return new RunCommand(() -> backRight.pidTuning(), this);
-  }
-
-  public RunCommand pidTuningAll(String str) {
-    SwerveModule mod = swerveMap.get(str);
-    return new RunCommand(() -> mod.pidTuning(), this);
-  }
-
-  public FunctionalCommand pidTuningFunc(String str) {
+  public FunctionalCommand pidTuning(String str) {
     SwerveModule mod = swerveMap.get(str);
     return new FunctionalCommand(
       mod::pidReset,
@@ -206,5 +175,4 @@ public class SwerveSubsystem extends SubsystemBase {
       () -> false,
       this);
   }
-
 }

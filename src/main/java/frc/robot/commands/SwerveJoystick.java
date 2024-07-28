@@ -14,7 +14,6 @@ import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.DriveConstants;
-import frc.robot.Constants.Misc;
 import frc.robot.Constants.ModuleConstants;
 import frc.robot.subsystems.SwerveSubsystem;
 
@@ -61,8 +60,8 @@ public class SwerveJoystick extends Command {
     SmartDashboard.putNumber("Y Speed", ySpeed);
     SmartDashboard.putNumber("Turning Speed", turningSpeed);
 
-    xSpeed = Math.abs(xSpeed) > Misc.kDeadband ? xSpeed : 0.0;
-    ySpeed = Math.abs(ySpeed) > Misc.kDeadband ? ySpeed : 0.0;
+    xSpeed = Math.abs(xSpeed) > DriveConstants.kDeadband ? xSpeed : 0.0;
+    ySpeed = Math.abs(ySpeed) > DriveConstants.kDeadband ? ySpeed : 0.0;
     turningSpeed = Math.abs(turningSpeed) > 0.1 ? turningSpeed : 0.0;
 
     // 15% of max speed
