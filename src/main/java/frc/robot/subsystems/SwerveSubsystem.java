@@ -7,6 +7,10 @@ package frc.robot.subsystems;
 import java.util.Map;
 
 import com.ctre.phoenix6.hardware.Pigeon2;
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
+import com.pathplanner.lib.util.PIDConstants;
+import com.pathplanner.lib.util.ReplanningConfig;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -19,6 +23,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.networktables.StructPublisher;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.FunctionalCommand;
@@ -92,6 +97,8 @@ public class SwerveSubsystem extends SubsystemBase {
   StructPublisher<Pose2d> posPublisher = NetworkTableInstance.getDefault().getStructTopic("SwervePose/Actual", Pose2d.struct).publish();
 
   public SwerveSubsystem() {
+    System.out.println("Drive Max" + ModuleConstants.driveMaxSpeedMPS);
+    System.out.println("Angle Max" + DriveConstants.maxAngularSpeedRadiansPerSecond);
     rotationPID.enableContinuousInput(-Math.PI, Math.PI);
     rotationPID.setIZone(0.05);
 
@@ -113,6 +120,29 @@ public class SwerveSubsystem extends SubsystemBase {
     SmartDashboard.putData("X PID", xPID);
     SmartDashboard.putData("Y PID", yPID);
     SmartDashboard.putData("Rotation PID", rotationPID);
+  
+    // PathPlanner init
+    AutoBuilder.configureHolonomic(
+      this::getPose, 
+      this::resetPose, 
+      this::getChassisSpeeds, 
+      this::driveRobotRelative, 
+      new HolonomicPathFollowerConfig(
+        new PIDConstants(2.3, 0, 0),
+        new PIDConstants(2.5, 1.2, 0),
+        ModuleConstants.driveMaxSpeedMPS * 0.15, //15% of max speed
+        DriveConstants.driveBaseRadius, 
+        new ReplanningConfig()
+      ),
+      //Returns true to flip path if on red alliance
+      () -> {
+        var alliance = DriverStation.getAlliance();
+        if (alliance.isPresent()) {
+          return alliance.get() == DriverStation.Alliance.Red;
+        }
+        return false;
+      }, 
+      this);
   }
 
   @Override
@@ -191,6 +221,11 @@ public class SwerveSubsystem extends SubsystemBase {
     return DriveConstants.kDriveKinematics.toChassisSpeeds(getModuleStates());
   }
 
+  public void driveRobotRelative(ChassisSpeeds chassisSpeeds) {
+    SwerveModuleState[] moduleStates = DriveConstants.kDriveKinematics.toSwerveModuleStates(chassisSpeeds);
+    setModuleStates(moduleStates);
+  }
+
   public SwerveModulePosition[] getModulePositions() {
     return new SwerveModulePosition[] {
       frontLeft.getPosition(),
@@ -221,6 +256,10 @@ public class SwerveSubsystem extends SubsystemBase {
 
   public double getPoseY() {
     return odometry.getPoseMeters().getY();
+  }
+
+  public Pose2d getPose() {
+    return odometry.getPoseMeters();
   }
 
   /**

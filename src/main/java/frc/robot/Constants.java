@@ -21,6 +21,7 @@ public final class Constants {
         public static final double driveMotorRotToMetre = 14.0/50.0 * 27.0/17.0 * 15.0/45.0 * 4 * Math.PI / 39.3;
         public static final double driveMotorRPMToMetresPerSecond = driveMotorRotToMetre / 60.0;
 
+        //4.60 m/s
         public static final double driveMaxSpeedMPS = neoFreeSpeedRPM * driveMotorRPMToMetresPerSecond;
 
         //Turning Motor
@@ -80,6 +81,10 @@ public final class Constants {
             private static final double secondsForOneRot = rotCircumference / ModuleConstants.driveMaxSpeedMPS;
             private static final double maxAngularSpeedRotPerSecond = 1.0 / secondsForOneRot;
         public static final double maxAngularSpeedRadiansPerSecond = maxAngularSpeedRotPerSecond * 2 * Math.PI;
+        //10.78 rad/s
+        //617.56 deg/s
+
+        public static final double driveBaseRadius = rotDiameter / 2.0;
 
         //FL, FR, BL, BR
         public static final SwerveDriveKinematics kDriveKinematics = new SwerveDriveKinematics(
