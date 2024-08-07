@@ -29,12 +29,16 @@ public class SwervePositionPIDTuning extends Command {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
+    double xSpeed = swerveSubsystem.robotPIDCalc('x', swerveSubsystem.getPoseX(), 0);
+    double ySpeed = swerveSubsystem.robotPIDCalc('y', swerveSubsystem.getPoseY(), 0);
     double rotSpeed = swerveSubsystem.robotPIDCalc('o', swerveSubsystem.getHeadingRadians(), 0);
+    SmartDashboard.putNumber("PID Output/X", xSpeed);
+    SmartDashboard.putNumber("PID Output/Y", ySpeed);
+    SmartDashboard.putNumber("PID Output/O", rotSpeed);
 
-    SmartDashboard.putNumber("PID Output", rotSpeed);
 
     ChassisSpeeds chassisSpeeds;
-    chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(0, 0, rotSpeed, swerveSubsystem.getRotation2d());
+    chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rotSpeed, swerveSubsystem.getRotation2d());
 
     SwerveModuleState[] moduleStates = DriveConstants.kDriveKinematics.toSwerveModuleStates(chassisSpeeds);
     

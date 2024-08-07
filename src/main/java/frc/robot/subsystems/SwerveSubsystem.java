@@ -57,8 +57,8 @@ public class SwerveSubsystem extends SubsystemBase {
 
   private final Pigeon2 gyro = new Pigeon2(DriveConstants.pigeonCANID);
 
-  private final PIDController xPID = new PIDController(0, 0, 0);
-  private final PIDController yPID = new PIDController(0, 0, 0);
+  private final PIDController xPID = new PIDController(2.3, 0, 0);
+  private final PIDController yPID = new PIDController(2.3, 0, 0);
   private final PIDController rotationPID = new PIDController(2.5, 1.2, 0);
 
   private final SwerveDriveOdometry odometry = new SwerveDriveOdometry(
@@ -110,6 +110,8 @@ public class SwerveSubsystem extends SubsystemBase {
 
     resetPose(new Pose2d());
 
+    SmartDashboard.putData("X PID", xPID);
+    SmartDashboard.putData("Y PID", yPID);
     SmartDashboard.putData("Rotation PID", rotationPID);
   }
 
@@ -196,6 +198,13 @@ public class SwerveSubsystem extends SubsystemBase {
       backLeft.getPosition(),
       backRight.getPosition()
     };
+  }
+
+  public void resetDriveEncoders() {
+    frontLeft.resetEncoders();
+    frontRight.resetEncoders();
+    backLeft.resetEncoders();
+    backRight.resetEncoders();
   }
 
   public void updateOdometry() {

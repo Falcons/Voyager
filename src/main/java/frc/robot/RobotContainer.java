@@ -30,9 +30,7 @@ public class RobotContainer {
 
     configureBindings();
 
-    SmartDashboard.putData("Reset Field Pose", new InstantCommand(() -> swerve.resetPose(new Pose2d())));
-    SmartDashboard.putData(swerve);
-    //SmartDashboard.putData("Zero", new RunCommand(() -> swerve.setModuleStates(DriveConstants.zero), swerve));
+    SmartDashboard.putData("Reset Field Pose", new InstantCommand(() -> swerve.resetPose(new Pose2d())).ignoringDisable(true));
   }
 
   private void configureBindings() {
