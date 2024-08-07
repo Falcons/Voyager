@@ -120,6 +120,7 @@ public class SwerveSubsystem extends SubsystemBase {
     SmartDashboard.putData("X PID", xPID);
     SmartDashboard.putData("Y PID", yPID);
     SmartDashboard.putData("Rotation PID", rotationPID);
+    SmartDashboard.putNumber("Module Setpoint", 0);
   
     // PathPlanner init
     AutoBuilder.configureHolonomic(
@@ -289,7 +290,13 @@ public class SwerveSubsystem extends SubsystemBase {
       mod::pidReset,
       mod::pidTuning,
       interrupted -> mod.stop(),
-      () -> false,
-      this);
+      () -> false);
+  }
+
+  public void allModuleSetpoint() {
+    frontLeft.setpoint();
+    frontRight.setpoint();
+    backLeft.setpoint();
+    backRight.setpoint();
   }
 }

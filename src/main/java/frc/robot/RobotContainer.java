@@ -10,9 +10,9 @@ import com.pathplanner.lib.commands.PathPlannerAuto;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.robot.commands.AllModulePID;
 import frc.robot.commands.SwerveJoystick;
 import frc.robot.commands.SwervePositionPIDTuning;
 import frc.robot.subsystems.SwerveSubsystem;
@@ -38,6 +38,7 @@ public class RobotContainer {
   private void configureBindings() {
     driver.b().onTrue(new InstantCommand(swerve::zeroHeading));
     driver.x().whileTrue(new SwervePositionPIDTuning(swerve));
+    driver.a().whileTrue(new AllModulePID(swerve));
 
     driver.povUpLeft().whileTrue(swerve.modulePIDTuning("Front Left"));
     driver.povUpRight().whileTrue(swerve.modulePIDTuning("Front Right"));
@@ -46,6 +47,6 @@ public class RobotContainer {
   }
 
   public Command getAutonomousCommand() {
-    return new PathPlannerAuto("Auto 1");
+    return new PathPlannerAuto("Figure 8 Auto");
   }
 }

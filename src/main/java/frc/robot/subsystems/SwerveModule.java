@@ -141,6 +141,11 @@ public class SwerveModule {
         turningMotor.set(turningPID.calculate(getAbsoluteEncoderDeg()));
     }
 
+    public void setpoint() {
+        double stpt = SmartDashboard.getNumber("Module Setpoint", 0);
+        turningPID.setSetpoint(stpt);
+    }   
+
     /** Resets the previous error and the integral term. */
     public void pidReset() {
         turningPID.reset();

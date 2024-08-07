@@ -23,7 +23,9 @@
       "/SmartDashboard/TurningPID/Back Left": "PIDController",
       "/SmartDashboard/TurningPID/Back Right": "PIDController",
       "/SmartDashboard/TurningPID/Front Left": "PIDController",
-      "/SmartDashboard/TurningPID/Front Right": "PIDController"
+      "/SmartDashboard/TurningPID/Front Right": "PIDController",
+      "/SmartDashboard/X PID": "PIDController",
+      "/SmartDashboard/Y PID": "PIDController"
     },
     "windows": {
       "/SmartDashboard/Field": {
