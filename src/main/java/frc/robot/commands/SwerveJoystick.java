@@ -9,8 +9,6 @@ import java.util.function.Supplier;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.DriveConstants;
@@ -23,7 +21,6 @@ public class SwerveJoystick extends Command {
   private final Supplier<Double> xSpeedFunc, ySpeedFunc, turningSpeedFunc;
   private final Supplier<Boolean> fieldOriented;
   private final SlewRateLimiter xLimiter, yLimiter, turningLimiter;
-  StructArrayPublisher<SwerveModuleState> publisher = NetworkTableInstance.getDefault().getStructArrayTopic("SwerveStates/Commanded", SwerveModuleState.struct).publish();
 
   public SwerveJoystick(
     SwerveSubsystem swerveSubsystem, 
@@ -65,9 +62,9 @@ public class SwerveJoystick extends Command {
     turningSpeed = Math.abs(turningSpeed) > 0.1 ? turningSpeed : 0.0;
 
     // 15% of max speed
-    xSpeed = xLimiter.calculate(xSpeed) * ModuleConstants.driveFreeSpeedMPS * 0.15;
-    ySpeed = yLimiter.calculate(ySpeed) * ModuleConstants.driveFreeSpeedMPS * 0.15;
-    turningSpeed = turningLimiter.calculate(turningSpeed) * ModuleConstants.turningFreeSpeedRadianPerSecond * 0.15;
+    xSpeed = xLimiter.calculate(xSpeed) * ModuleConstants.driveMaxSpeedMPS * 0.15;
+    ySpeed = yLimiter.calculate(ySpeed) * ModuleConstants.driveMaxSpeedMPS * 0.15;
+    turningSpeed = turningLimiter.calculate(turningSpeed) * DriveConstants.maxAngularSpeedRadiansPerSecond * 0.15;
 
     ChassisSpeeds chassisSpeeds;
     if (fieldOriented.get()) {
@@ -77,8 +74,6 @@ public class SwerveJoystick extends Command {
     }
 
     SwerveModuleState[] moduleStates = DriveConstants.kDriveKinematics.toSwerveModuleStates(chassisSpeeds);
-
-    publisher.set(moduleStates);
     
     swerveSubsystem.setModuleStates(moduleStates);
   }
@@ -87,6 +82,7 @@ public class SwerveJoystick extends Command {
   @Override
   public void end(boolean interrupted) {
     swerveSubsystem.stopModules();
+    System.out.println("SwerveJoystick End");
   }
 
   // Returns true when the command should end.

@@ -16,7 +16,14 @@
     },
     "types": {
       "/FMSInfo": "FMSInfo",
-      "/SmartDashboard/Field": "Field2d"
+      "/SmartDashboard/Field": "Field2d",
+      "/SmartDashboard/Reset Field Pose": "Command",
+      "/SmartDashboard/Rotation PID": "PIDController",
+      "/SmartDashboard/SwerveSubsystem": "Subsystem",
+      "/SmartDashboard/TurningPID/Back Left": "PIDController",
+      "/SmartDashboard/TurningPID/Back Right": "PIDController",
+      "/SmartDashboard/TurningPID/Front Left": "PIDController",
+      "/SmartDashboard/TurningPID/Front Right": "PIDController"
     },
     "windows": {
       "/SmartDashboard/Field": {
@@ -25,7 +32,10 @@
         "left": 150,
         "right": 2961,
         "top": 79,
-        "width": 16.541748046875
+        "width": 16.541748046875,
+        "window": {
+          "visible": true
+        }
       }
     }
   },

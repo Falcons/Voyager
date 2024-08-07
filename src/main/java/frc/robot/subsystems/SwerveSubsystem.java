@@ -8,8 +8,10 @@ import java.util.Map;
 
 import com.ctre.phoenix6.hardware.Pigeon2;
 
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -29,45 +31,35 @@ public class SwerveSubsystem extends SubsystemBase {
     "Front Left",
     ModuleConstants.frontLeftDriveCANID, 
     ModuleConstants.frontLeftTurningCANID, 
-    true, 
+    ModuleConstants.frontLeftReversed, 
     ModuleConstants.frontLeftAbsoluteOffset);
 
   private final SwerveModule frontRight = new SwerveModule(
     "Front Right",
     ModuleConstants.frontRightDriveCANID, 
     ModuleConstants.frontRightTurningCANID, 
-    true, 
+    ModuleConstants.frontRightReversed, 
     ModuleConstants.frontRightAbsoluteOffset);
   
   private final SwerveModule backLeft = new SwerveModule(
     "Back Left",
     ModuleConstants.backLeftDriveCANID, 
     ModuleConstants.backLeftTurningCANID, 
-    true, 
+    ModuleConstants.backLeftReversed, 
     ModuleConstants.backLeftAbsoluteOffset);
 
   private final SwerveModule backRight = new SwerveModule(
     "Back Right",
     ModuleConstants.backRightDriveCANID, 
     ModuleConstants.backRightTurningCANID, 
-    true, 
+    ModuleConstants.backRightReversed, 
     ModuleConstants.backRightAbsoluteOffset);
 
-  SwerveModule[] modules = new SwerveModule[] {
-    frontLeft,
-    frontRight,
-    backLeft,
-    backRight
-  };
-
-  public Map<String, SwerveModule> swerveMap = Map.of(
-    "Front Left", frontLeft, 
-    "Front Right", frontRight,
-    "Back Left", backLeft,
-    "Back Right", backRight);
-  
-  
   private final Pigeon2 gyro = new Pigeon2(DriveConstants.pigeonCANID);
+
+  private final PIDController xPID = new PIDController(0, 0, 0);
+  private final PIDController yPID = new PIDController(0, 0, 0);
+  private final PIDController rotationPID = new PIDController(2.5, 1.2, 0);
 
   private final SwerveDriveOdometry odometry = new SwerveDriveOdometry(
     DriveConstants.kDriveKinematics, 
@@ -77,11 +69,37 @@ public class SwerveSubsystem extends SubsystemBase {
 
   private final Field2d field = new Field2d();
 
+  private final SwerveModule[] modules = new SwerveModule[] {
+    frontLeft,
+    frontRight,
+    backLeft,
+    backRight
+  };
+
+  private final Map<String, SwerveModule> swerveMap = Map.of(
+    "Front Left", frontLeft, 
+    "Front Right", frontRight,
+    "Back Left", backLeft,
+    "Back Right", backRight);
+
+  private final Map<Character, PIDController> pidMap = Map.of(
+    'x', xPID,
+    'y', yPID,
+    'o', rotationPID);
+
+  StructArrayPublisher<SwerveModuleState> commandedStatePublisher = NetworkTableInstance.getDefault().getStructArrayTopic("SwerveStates/Commanded", SwerveModuleState.struct).publish();
   StructArrayPublisher<SwerveModuleState> statePublisher = NetworkTableInstance.getDefault().getStructArrayTopic("SwerveStates/Actual", SwerveModuleState.struct).publish();
   StructPublisher<Pose2d> posPublisher = NetworkTableInstance.getDefault().getStructTopic("SwervePose/Actual", Pose2d.struct).publish();
 
   public SwerveSubsystem() {
-    //copied from 0toAuto swerve video, waits 1 second for gyro cal. to zero heading
+    rotationPID.enableContinuousInput(-Math.PI, Math.PI);
+    rotationPID.setIZone(0.05);
+
+    xPID.reset();
+    yPID.reset();
+    rotationPID.reset();
+
+    //copied from 0toAuto swerve video, waits 1 second for gyro calibration to zero heading
     new Thread(() -> {
       try {
         Thread.sleep(1000);
@@ -91,12 +109,14 @@ public class SwerveSubsystem extends SubsystemBase {
     }).start();
 
     resetPose(new Pose2d());
-    
+
+    SmartDashboard.putData("Rotation PID", rotationPID);
   }
 
   @Override
   public void periodic() {
-    statePublisher.set(getModuleState());
+    //Sends actual Module States and Pose over NT
+    statePublisher.set(getModuleStates());
     posPublisher.set(odometry.getPoseMeters());
 
     updateOdometry();
@@ -104,27 +124,41 @@ public class SwerveSubsystem extends SubsystemBase {
     field.setRobotPose(odometry.getPoseMeters());
 
     SmartDashboard.putData(field);
-    SmartDashboard.putNumber("Robot Heading", getHeading());
+
+    SmartDashboard.putNumber("FieldX", getPoseX());
+    SmartDashboard.putNumber("FieldY", getPoseY());
+    SmartDashboard.putNumber("Robot Heading Degrees", getRotation2d().getDegrees());
     SmartDashboard.putNumber("Robot Heading Radians", getRotation2d().getRadians());
+    SmartDashboard.putNumber("Robot Heading Method", getHeadingRadians());
 
     for (SwerveModule module:modules) {
-      SmartDashboard.putNumber(module.moduleName + " Angle", module.getState().angle.getDegrees());
+      SmartDashboard.putNumber("Module/Speed/" + module.moduleName, module.getState().speedMetersPerSecond);
+      SmartDashboard.putNumber("Module/Angle/" + module.moduleName, module.getState().angle.getDegrees());
     }
+    SmartDashboard.putNumber("Rotation PID setpoint", robotPIDSetpoint('o'));
+    SmartDashboard.putNumber("Robot/X Speed", getChassisSpeeds().vxMetersPerSecond);
+    SmartDashboard.putNumber("Robot/Y Speed", getChassisSpeeds().vyMetersPerSecond);
+    SmartDashboard.putNumber("Robot/Turning Speed", getChassisSpeeds().omegaRadiansPerSecond);
+  }
 
+  /** @return Gyro Position in degrees (-180 to 180) CCW+ */
+  public double getHeading() {
+    return Math.IEEEremainder(gyro.getAngle(), 360);
+  }
+
+  public double getHeadingRadians() {
+    return Math.IEEEremainder(getRotation2d().getRadians(), 2 * Math.PI);
   }
 
   public void zeroHeading() {
     gyro.reset();
-  }
-  //test on timed first
-  public double getHeading() {
-    return Math.IEEEremainder(gyro.getAngle(), 360);
   }
 
   public Rotation2d getRotation2d() {
     return gyro.getRotation2d();
   }
 
+  /** Stops all Swerve Motors */
   public void stopModules() {
     frontLeft.stop();
     frontRight.stop();
@@ -132,15 +166,17 @@ public class SwerveSubsystem extends SubsystemBase {
     backRight.stop();
   }
 
+  /** Sets all 4 Modules to specified Speed and Angle */
   public void setModuleStates(SwerveModuleState[] desiredStates) {
-    SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, ModuleConstants.driveFreeSpeedMPS);
+    commandedStatePublisher.set(desiredStates);
+    SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, ModuleConstants.driveMaxSpeedMPS);
     frontLeft.setDesiredState(desiredStates[0]);
     frontRight.setDesiredState(desiredStates[1]);
     backLeft.setDesiredState(desiredStates[2]);
     backRight.setDesiredState(desiredStates[3]);
   }
 
-  public SwerveModuleState[] getModuleState() {
+  public SwerveModuleState[] getModuleStates() {
     return new SwerveModuleState[] {
       frontLeft.getState(),
       frontRight.getState(),
@@ -149,12 +185,8 @@ public class SwerveSubsystem extends SubsystemBase {
     };
   }
 
-  public void updateOdometry() {
-    odometry.update(getRotation2d(), getModulePositions());
-  }
-
-  public void resetPose(Pose2d pose) {
-    odometry.resetPosition(getRotation2d(), getModulePositions(), pose);
+  public ChassisSpeeds getChassisSpeeds() {
+    return DriveConstants.kDriveKinematics.toChassisSpeeds(getModuleStates());
   }
 
   public SwerveModulePosition[] getModulePositions() {
@@ -166,8 +198,45 @@ public class SwerveSubsystem extends SubsystemBase {
     };
   }
 
-  public FunctionalCommand pidTuning(String str) {
-    SwerveModule mod = swerveMap.get(str);
+  public void updateOdometry() {
+    odometry.update(getRotation2d(), getModulePositions());
+  }
+
+  public void resetPose(Pose2d pose) {
+    odometry.resetPosition(getRotation2d(), getModulePositions(), pose);
+  }
+
+  public double getPoseX() {
+    return odometry.getPoseMeters().getX();
+  }
+
+  public double getPoseY() {
+    return odometry.getPoseMeters().getY();
+  }
+
+  /**
+   * Method for any Robot PID calculation
+   * @param controller 'x', 'y', or 'o' for xPID, yPID, rotationPID
+   * @param measurement sensor to read
+   * @param setpoint target value
+   * @return output of chosen PIDController
+   */
+  public double robotPIDCalc(char controller, double measurement, double setpoint) {
+    PIDController pid = pidMap.get(controller);
+    return pid.calculate(measurement, setpoint);
+  }
+
+  public double robotPIDSetpoint(char controller) {
+    PIDController pid = pidMap.get(controller);
+    return pid.getSetpoint();
+  }
+
+  /**
+   * Commands Swerve Module to Setpoint
+   * @param moduleName Name of Swerve Module (e.g. "Front Left")
+   */
+  public FunctionalCommand modulePIDTuning(String moduleName) {
+    SwerveModule mod = swerveMap.get(moduleName);
     return new FunctionalCommand(
       mod::pidReset,
       mod::pidTuning,
