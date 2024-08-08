@@ -62,9 +62,9 @@ public class SwerveSubsystem extends SubsystemBase {
 
   private final Pigeon2 gyro = new Pigeon2(DriveConstants.pigeonCANID);
 
-  private final PIDController xPID = new PIDController(2.3, 0, 0);
-  private final PIDController yPID = new PIDController(2.3, 0, 0);
-  private final PIDController rotationPID = new PIDController(2.5, 1.2, 0);
+  private final PIDController xPID = new PIDController(DriveConstants.translationKP, 0, 0);
+  private final PIDController yPID = new PIDController(DriveConstants.translationKP, 0, 0);
+  private final PIDController rotationPID = new PIDController(DriveConstants.rotationKP, DriveConstants.rotationKI, 0);
 
   private final SwerveDriveOdometry odometry = new SwerveDriveOdometry(
     DriveConstants.kDriveKinematics, 
@@ -117,12 +117,13 @@ public class SwerveSubsystem extends SubsystemBase {
 
     resetPose(new Pose2d());
 
+    // Sends PID Controllers to Shuffleboard
     SmartDashboard.putData("X PID", xPID);
     SmartDashboard.putData("Y PID", yPID);
     SmartDashboard.putData("Rotation PID", rotationPID);
     SmartDashboard.putNumber("Module Setpoint", 0);
   
-    // PathPlanner init
+    // PathPlanner Initialization
     AutoBuilder.configureHolonomic(
       this::getPose, 
       this::resetPose, 
@@ -131,7 +132,7 @@ public class SwerveSubsystem extends SubsystemBase {
       new HolonomicPathFollowerConfig(
         new PIDConstants(2.3, 0, 0),
         new PIDConstants(2.5, 1.2, 0),
-        ModuleConstants.driveMaxSpeedMPS * 0.15, //15% of max speed
+        ModuleConstants.driveMaxSpeedMPS,
         DriveConstants.driveBaseRadius, 
         new ReplanningConfig()
       ),
@@ -148,47 +149,26 @@ public class SwerveSubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
-    //Sends actual Module States and Pose over NT
     statePublisher.set(getModuleStates());
     posPublisher.set(odometry.getPoseMeters());
 
     updateOdometry();
-
     field.setRobotPose(odometry.getPoseMeters());
-
-    SmartDashboard.putData(field);
-
-    SmartDashboard.putNumber("FieldX", getPoseX());
-    SmartDashboard.putNumber("FieldY", getPoseY());
-    SmartDashboard.putNumber("Robot Heading Degrees", getRotation2d().getDegrees());
-    SmartDashboard.putNumber("Robot Heading Radians", getRotation2d().getRadians());
-    SmartDashboard.putNumber("Robot Heading Method", getHeadingRadians());
-
+    
     for (SwerveModule module:modules) {
       SmartDashboard.putNumber("Module/Speed/" + module.moduleName, module.getState().speedMetersPerSecond);
       SmartDashboard.putNumber("Module/Angle/" + module.moduleName, module.getState().angle.getDegrees());
     }
-    SmartDashboard.putNumber("Rotation PID setpoint", robotPIDSetpoint('o'));
+
+    SmartDashboard.putNumber("Robot/FieldX", getPose().getX());
     SmartDashboard.putNumber("Robot/X Speed", getChassisSpeeds().vxMetersPerSecond);
+
+    SmartDashboard.putNumber("Robot/FieldY", getPose().getY());
     SmartDashboard.putNumber("Robot/Y Speed", getChassisSpeeds().vyMetersPerSecond);
+
+    SmartDashboard.putNumber("Robot/Heading Radians", getWrappedHeadingRadians());
+    SmartDashboard.putNumber("Robot/Heading Degrees", getWrappedHeadingDegrees());
     SmartDashboard.putNumber("Robot/Turning Speed", getChassisSpeeds().omegaRadiansPerSecond);
-  }
-
-  /** @return Gyro Position in degrees (-180 to 180) CCW+ */
-  public double getHeading() {
-    return Math.IEEEremainder(gyro.getAngle(), 360);
-  }
-
-  public double getHeadingRadians() {
-    return Math.IEEEremainder(getRotation2d().getRadians(), 2 * Math.PI);
-  }
-
-  public void zeroHeading() {
-    gyro.reset();
-  }
-
-  public Rotation2d getRotation2d() {
-    return gyro.getRotation2d();
   }
 
   /** Stops all Swerve Motors */
@@ -198,6 +178,30 @@ public class SwerveSubsystem extends SubsystemBase {
     backLeft.stop();
     backRight.stop();
   }
+
+// Gyro
+
+  /** Resets Gyro Heading to 0 */
+  public void zeroHeading() {
+    gyro.reset();
+  }
+
+  /** @return Gyro Rotation2d, continuous */
+  public Rotation2d getRotation2d() {
+    return gyro.getRotation2d();
+  }
+
+  /** @return Gyro Heading in Radians (-Pi, Pi) CCW+ */
+  public double getWrappedHeadingRadians() {
+    return Math.IEEEremainder(getRotation2d().getRadians(), 2 * Math.PI);
+  }
+
+  /** @return Gyro Heading in Degrees(-180, 180) CCW+ */
+  public double getWrappedHeadingDegrees() {
+    return getWrappedHeadingRadians() * 180 / Math.PI;
+  }
+
+// SwerveModuleStates
 
   /** Sets all 4 Modules to specified Speed and Angle */
   public void setModuleStates(SwerveModuleState[] desiredStates) {
@@ -209,6 +213,7 @@ public class SwerveSubsystem extends SubsystemBase {
     backRight.setDesiredState(desiredStates[3]);
   }
 
+  /** @return Array of all 4 Module Speed and Angle */
   public SwerveModuleState[] getModuleStates() {
     return new SwerveModuleState[] {
       frontLeft.getState(),
@@ -218,15 +223,32 @@ public class SwerveSubsystem extends SubsystemBase {
     };
   }
 
+// ChassisSpeeds
+
+  /** @return Robot-Relative chassisSpeeds */
   public ChassisSpeeds getChassisSpeeds() {
     return DriveConstants.kDriveKinematics.toChassisSpeeds(getModuleStates());
   }
 
+  /** Sets Module states from a chassisSpeeds */
   public void driveRobotRelative(ChassisSpeeds chassisSpeeds) {
     SwerveModuleState[] moduleStates = DriveConstants.kDriveKinematics.toSwerveModuleStates(chassisSpeeds);
     setModuleStates(moduleStates);
   }
 
+// Odometry
+
+  /** Sets Robot Pose */
+  public void resetPose(Pose2d pose) {
+    odometry.resetPosition(getRotation2d(), getModulePositions(), pose);
+  }
+
+  /** @return Robot Pose */
+  public Pose2d getPose() {
+    return odometry.getPoseMeters();
+  }
+
+  /** @return Array of current Position and Angle of all 4 Modules */
   public SwerveModulePosition[] getModulePositions() {
     return new SwerveModulePosition[] {
       frontLeft.getPosition(),
@@ -236,49 +258,12 @@ public class SwerveSubsystem extends SubsystemBase {
     };
   }
 
-  public void resetDriveEncoders() {
-    frontLeft.resetEncoders();
-    frontRight.resetEncoders();
-    backLeft.resetEncoders();
-    backRight.resetEncoders();
-  }
-
+  /** Updates Robot Pose based on Gyro and Module Positions */
   public void updateOdometry() {
     odometry.update(getRotation2d(), getModulePositions());
   }
 
-  public void resetPose(Pose2d pose) {
-    odometry.resetPosition(getRotation2d(), getModulePositions(), pose);
-  }
-
-  public double getPoseX() {
-    return odometry.getPoseMeters().getX();
-  }
-
-  public double getPoseY() {
-    return odometry.getPoseMeters().getY();
-  }
-
-  public Pose2d getPose() {
-    return odometry.getPoseMeters();
-  }
-
-  /**
-   * Method for any Robot PID calculation
-   * @param controller 'x', 'y', or 'o' for xPID, yPID, rotationPID
-   * @param measurement sensor to read
-   * @param setpoint target value
-   * @return output of chosen PIDController
-   */
-  public double robotPIDCalc(char controller, double measurement, double setpoint) {
-    PIDController pid = pidMap.get(controller);
-    return pid.calculate(measurement, setpoint);
-  }
-
-  public double robotPIDSetpoint(char controller) {
-    PIDController pid = pidMap.get(controller);
-    return pid.getSetpoint();
-  }
+// PID
 
   /**
    * Commands Swerve Module to Setpoint
@@ -293,10 +278,29 @@ public class SwerveSubsystem extends SubsystemBase {
       () -> false);
   }
 
+  /** Sets all 4 Module Setpoint from Smartdashboard value */
   public void allModuleSetpoint() {
     frontLeft.setpoint();
     frontRight.setpoint();
     backLeft.setpoint();
     backRight.setpoint();
+  }
+
+  /**
+   * Method for any Robot PID calculation
+   * @param controller 'x', 'y', or 'o' for xPID, yPID, rotationPID
+   * @param measurement sensor to read
+   * @param setpoint target value
+   * @return output of chosen PIDController
+   */
+  public double robotPIDCalc(char controller, double measurement, double setpoint) {
+    PIDController pid = pidMap.get(controller);
+    return pid.calculate(measurement, setpoint);
+  }
+
+  /** Gets Robot PID Setpoint */
+  public double robotPIDSetpoint(char controller) {
+    PIDController pid = pidMap.get(controller);
+    return pid.getSetpoint();
   }
 }

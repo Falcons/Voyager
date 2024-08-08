@@ -4,11 +4,8 @@
 
 package frc.robot;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
 
 /** Add your docs here. */
@@ -93,27 +90,12 @@ public final class Constants {
             new Translation2d(-kTrackwidth / 2.0, kTrackwidth / 2.0),
             new Translation2d(-kTrackwidth / 2.0, -kTrackwidth / 2.0));
 
-        public static final SwerveModuleState[] zero = new SwerveModuleState[]{
-            new SwerveModuleState(),
-            new SwerveModuleState(),
-            new SwerveModuleState(),
-            new SwerveModuleState()
-        };
+        public static final double translationKP = 2.3;
+        public static final double translationKI = 0;
+        public static final double translationKD = 0;
 
-        public static final SwerveModuleState[] turning = new SwerveModuleState[]{
-            new SwerveModuleState(0, new Rotation2d(Units.degreesToRadians(-45))),
-            new SwerveModuleState(0, new Rotation2d(Units.degreesToRadians(45))),
-            new SwerveModuleState(0, new Rotation2d(Units.degreesToRadians(-45))),
-            new SwerveModuleState(0, new Rotation2d(Units.degreesToRadians(45)))
-        };
-
-        public static final SwerveModuleState[] lock = new SwerveModuleState[]{
-            new SwerveModuleState(0, new Rotation2d(Units.degreesToRadians(45))),
-            new SwerveModuleState(0, new Rotation2d(Units.degreesToRadians(-45))),
-            new SwerveModuleState(0, new Rotation2d(Units.degreesToRadians(45))),
-            new SwerveModuleState(0, new Rotation2d(Units.degreesToRadians(-45)))
-        };
-
-        public static final Pose2d noteBlueCloseAmp = new Pose2d(Units.inchesToMeters(114.0), Units.inchesToMeters(275.42), new Rotation2d());
+        public static final double rotationKP = 2.5;
+        public static final double rotationKI = 1.2;
+        public static final double rotationKD = 0;
     }
 }

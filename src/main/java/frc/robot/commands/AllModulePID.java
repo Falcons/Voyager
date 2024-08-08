@@ -16,10 +16,10 @@ public class AllModulePID extends ParallelCommandGroup {
   public AllModulePID(SwerveSubsystem swerve) {
     this.swerveSubsystem = swerve;
     addCommands(
-    swerve.modulePIDTuning("Front Left"),
-    swerve.modulePIDTuning("Front Right"),
-    swerve.modulePIDTuning("Back Left"),
-    swerve.modulePIDTuning("Back Right"),
+    swerveSubsystem.modulePIDTuning("Front Left"),
+    swerveSubsystem.modulePIDTuning("Front Right"),
+    swerveSubsystem.modulePIDTuning("Back Left"),
+    swerveSubsystem.modulePIDTuning("Back Right"),
     new InstantCommand(swerve::allModuleSetpoint)
     );
   }

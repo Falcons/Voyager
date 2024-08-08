@@ -51,37 +51,51 @@ public class SwerveModule {
         turningPID.enableContinuousInput(-180, 180);
         turningPID.setTolerance(0.1);
         turningPID.setIntegratorRange(-0.01, 0.01);
-        turningEncoder.setPosition(getAbsoluteEncoderDeg());
+        turningEncoder.setPosition(getAbsEncoderDeg());
         
         SmartDashboard.putData("TurningPID/" + this.moduleName, this.turningPID);
 
         resetEncoders();
     }
 
+    /** Stops Drive and Turning Motors */
+    public void stop() {
+        driveMotor.set(0);
+        turningMotor.set(0);
+    }
+
+// Integrated Drive Encoder
+
     /** @return Drive Encoder Postion in Metres */
     public double getDrivePosition() {
         return driveEncoder.getPosition();
     }
 
-    /** @return Raw Integrated Turning Encoder */
-    public double getTurningPosition() {
-        return turningEncoder.getPosition();
-    }
-    /** @return Integrated Turning Encoder in degrees (-180 to 180) CCW+ */
-    public double getTurningEncoderDegree() {
-        return Math.IEEEremainder(turningEncoder.getPosition(), 360);
-      } 
-    
     /** @return Drive Encoder position in Metres per Second */
     public double getDriveVelocity() {
         return driveEncoder.getVelocity();
     }
 
+// Integrated Turning Encoder
+
+    /** @return Raw Integrated Turning Encoder */
+    public double getTurningPosition() {
+        return turningEncoder.getPosition();
+    }
+
+    /** @return Integrated Turning Encoder in degrees (-180 to 180) CCW+ */
+    public double getTurningEncoderDegree() {
+        return Math.IEEEremainder(turningEncoder.getPosition(), 360);
+      } 
+    
+
     public double getTurningVelocity() {
         return turningEncoder.getVelocity();
     }
 
-    /** @return position in correct units, incorrect range */
+// Absolute Encoder
+
+    /** @return Abs position in correct units, incorrect range */
     public double rawPositionWithOffset() {
         return absEncoder.getPosition() - absEncoderOffset;
     }
@@ -100,18 +114,20 @@ public class SwerveModule {
     }
 
     /** @return Absolute Encoder in degrees (-180 to 180) CCW+ */
-    public double getAbsoluteEncoderDeg() {
+    public double getAbsEncoderDeg() {
         return getAbsEncoderRad() * 180.0 / Math.PI;
     }
 
     /** Resets Drive encoders and matches Turning encoders with absolute */
     public void resetEncoders() {
         driveEncoder.setPosition(0);
-        turningEncoder.setPosition(getAbsoluteEncoderDeg());
+        turningEncoder.setPosition(getAbsEncoderDeg());
     }
 
+// SwerveModuleState
+
+    /** @return Current Speed and Angle of Module */
     public SwerveModuleState getState() {
-        //angle must be in radians
         return new SwerveModuleState(getDriveVelocity(), new Rotation2d(getAbsEncoderRad()));
     }
 
@@ -123,24 +139,24 @@ public class SwerveModule {
         }
         state = SwerveModuleState.optimize(state, getState().angle);
         driveMotor.set(state.speedMetersPerSecond / ModuleConstants.driveMaxSpeedMPS);
-        turningMotor.set(turningPID.calculate(getAbsoluteEncoderDeg(), state.angle.getDegrees()));
+        turningMotor.set(turningPID.calculate(getAbsEncoderDeg(), state.angle.getDegrees()));
     }
 
+// SwerveModulePosition
+
+    /** @return Current Position and Angle of Module */
     public SwerveModulePosition getPosition() {
         return new SwerveModulePosition(getDrivePosition(), getState().angle);
     }
-    /** Stops Drive and Turning Motors */
-    public void stop() {
-        driveMotor.set(0);
-        turningMotor.set(0);
-    }
 
-    //PID Controller is already printed to dashboard, values can be changed live
+//PID
+
     /** Turning Motor to Setpoint */
     public void pidTuning() {
-        turningMotor.set(turningPID.calculate(getAbsoluteEncoderDeg()));
+        turningMotor.set(turningPID.calculate(getAbsEncoderDeg()));
     }
 
+    /** Sets PID setpoint from Smartdashboard value */
     public void setpoint() {
         double stpt = SmartDashboard.getNumber("Module Setpoint", 0);
         turningPID.setSetpoint(stpt);
