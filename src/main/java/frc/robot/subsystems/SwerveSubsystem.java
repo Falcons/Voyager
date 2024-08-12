@@ -12,12 +12,13 @@ import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
 import com.pathplanner.lib.util.PIDConstants;
 import com.pathplanner.lib.util.ReplanningConfig;
 
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -30,6 +31,8 @@ import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.ModuleConstants;
+
+import frc.robot.LimelightHelpers;
 
 public class SwerveSubsystem extends SubsystemBase {
   private final SwerveModule frontLeft = new SwerveModule(
@@ -66,13 +69,13 @@ public class SwerveSubsystem extends SubsystemBase {
   private final PIDController yPID = new PIDController(DriveConstants.translationKP, 0, 0);
   private final PIDController rotationPID = new PIDController(DriveConstants.rotationKP, DriveConstants.rotationKI, 0);
 
-  private final SwerveDriveOdometry odometry = new SwerveDriveOdometry(
+  private final SwerveDrivePoseEstimator poseEstimator = new SwerveDrivePoseEstimator(
     DriveConstants.kDriveKinematics, 
     getRotation2d(), 
     getModulePositions(), 
     new Pose2d());
 
-  private final Field2d field = new Field2d();
+  private final Field2d field2024 = new Field2d();
 
   private final SwerveModule[] modules = new SwerveModule[] {
     frontLeft,
@@ -94,7 +97,7 @@ public class SwerveSubsystem extends SubsystemBase {
 
   StructArrayPublisher<SwerveModuleState> commandedStatePublisher = NetworkTableInstance.getDefault().getStructArrayTopic("SwerveStates/Commanded", SwerveModuleState.struct).publish();
   StructArrayPublisher<SwerveModuleState> statePublisher = NetworkTableInstance.getDefault().getStructArrayTopic("SwerveStates/Actual", SwerveModuleState.struct).publish();
-  StructPublisher<Pose2d> posPublisher = NetworkTableInstance.getDefault().getStructTopic("SwervePose/Actual", Pose2d.struct).publish();
+  //StructPublisher<Pose2d> posPublisher = NetworkTableInstance.getDefault().getStructTopic("SwervePose/Actual", Pose2d.struct).publish();
 
   public SwerveSubsystem() {
     System.out.println("Drive Max" + ModuleConstants.driveMaxSpeedMPS);
@@ -118,9 +121,9 @@ public class SwerveSubsystem extends SubsystemBase {
     resetPose(new Pose2d());
 
     // Sends PID Controllers to Shuffleboard
-    SmartDashboard.putData("X PID", xPID);
-    SmartDashboard.putData("Y PID", yPID);
-    SmartDashboard.putData("Rotation PID", rotationPID);
+    SmartDashboard.putData("RobotPID/X PID", xPID);
+    SmartDashboard.putData("RobotPID/Y PID", yPID);
+    SmartDashboard.putData("RobotPID/Rotation PID", rotationPID);
     SmartDashboard.putNumber("Module Setpoint", 0);
   
     // PathPlanner Initialization
@@ -150,10 +153,10 @@ public class SwerveSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
     statePublisher.set(getModuleStates());
-    posPublisher.set(odometry.getPoseMeters());
+    //posPublisher.set(poseEstimator.getEstimatedPosition());
 
-    updateOdometry();
-    field.setRobotPose(odometry.getPoseMeters());
+    updatePoseEstimator();
+    field2024.setRobotPose(poseEstimator.getEstimatedPosition());
     
     for (SwerveModule module:modules) {
       SmartDashboard.putNumber("Module/Speed/" + module.moduleName, module.getState().speedMetersPerSecond);
@@ -169,6 +172,8 @@ public class SwerveSubsystem extends SubsystemBase {
     SmartDashboard.putNumber("Robot/Heading Radians", getWrappedHeadingRadians());
     SmartDashboard.putNumber("Robot/Heading Degrees", getWrappedHeadingDegrees());
     SmartDashboard.putNumber("Robot/Turning Speed", getChassisSpeeds().omegaRadiansPerSecond);
+
+    SmartDashboard.putData(field2024);
   }
 
   /** Stops all Swerve Motors */
@@ -236,16 +241,18 @@ public class SwerveSubsystem extends SubsystemBase {
     setModuleStates(moduleStates);
   }
 
-// Odometry
+// Odometry/Pose Estimation
 
   /** Sets Robot Pose */
   public void resetPose(Pose2d pose) {
-    odometry.resetPosition(getRotation2d(), getModulePositions(), pose);
+    //odometry.resetPosition(getRotation2d(), getModulePositions(), pose);
+    poseEstimator.resetPosition(getRotation2d(), getModulePositions(), pose);
   }
 
   /** @return Robot Pose */
   public Pose2d getPose() {
-    return odometry.getPoseMeters();
+    //return odometry.getPoseMeters();
+    return poseEstimator.getEstimatedPosition();
   }
 
   /** @return Array of current Position and Angle of all 4 Modules */
@@ -259,8 +266,35 @@ public class SwerveSubsystem extends SubsystemBase {
   }
 
   /** Updates Robot Pose based on Gyro and Module Positions */
-  public void updateOdometry() {
-    odometry.update(getRotation2d(), getModulePositions());
+  public void updatePoseEstimator() {
+    poseEstimator.update(getRotation2d(), getModulePositions());
+
+    boolean useMegaTag2 = false; //using megatag 1
+    boolean doRejectUpdate = false;
+
+    if (!useMegaTag2) {
+      LimelightHelpers.PoseEstimate mt1 = LimelightHelpers.getBotPoseEstimate_wpiBlue("limelight");
+
+      if (mt1.tagCount == 1 && mt1.rawFiducials.length == 1) {
+        if (mt1.rawFiducials[0].ambiguity > 0.7) {
+          doRejectUpdate = true;
+        }
+
+        if (mt1.rawFiducials[0].distToCamera > 3) {
+          doRejectUpdate = true;
+        }
+      }
+
+      if (mt1.tagCount == 0) {
+        doRejectUpdate = true;
+      }
+
+      if(!doRejectUpdate) {
+        poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(0.5, 0.5, 9999999));
+        poseEstimator.addVisionMeasurement(mt1.pose, mt1.timestampSeconds);
+      }
+    }
+    //code for megatag 2
   }
 
 // PID
