@@ -6,6 +6,9 @@ package frc.robot.subsystems;
 
 import java.util.Map;
 
+import org.photonvision.PhotonCamera;
+import org.photonvision.targeting.PhotonTrackedTarget;
+
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
@@ -23,7 +26,7 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
-import edu.wpi.first.networktables.StructPublisher;
+//import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -65,6 +68,8 @@ public class SwerveSubsystem extends SubsystemBase {
 
   private final Pigeon2 gyro = new Pigeon2(DriveConstants.pigeonCANID);
 
+  PhotonCamera photonCam;
+
   private final PIDController xPID = new PIDController(DriveConstants.translationKP, 0, 0);
   private final PIDController yPID = new PIDController(DriveConstants.translationKP, 0, 0);
   private final PIDController rotationPID = new PIDController(DriveConstants.rotationKP, DriveConstants.rotationKI, 0);
@@ -100,8 +105,7 @@ public class SwerveSubsystem extends SubsystemBase {
   //StructPublisher<Pose2d> posPublisher = NetworkTableInstance.getDefault().getStructTopic("SwervePose/Actual", Pose2d.struct).publish();
 
   public SwerveSubsystem() {
-    System.out.println("Drive Max" + ModuleConstants.driveMaxSpeedMPS);
-    System.out.println("Angle Max" + DriveConstants.maxAngularSpeedRadiansPerSecond);
+    photonCam = new PhotonCamera("USB2.0_PC_CAMERA");
     rotationPID.enableContinuousInput(-Math.PI, Math.PI);
     rotationPID.setIZone(0.05);
 
@@ -174,6 +178,16 @@ public class SwerveSubsystem extends SubsystemBase {
     SmartDashboard.putNumber("Robot/Turning Speed", getChassisSpeeds().omegaRadiansPerSecond);
 
     SmartDashboard.putData(field2024);
+
+    var result = photonCam.getLatestResult();
+    boolean hasTargets = result.hasTargets();
+    SmartDashboard.putBoolean("Has targets", hasTargets);
+
+    if (hasTargets) {
+      PhotonTrackedTarget target = result.getBestTarget();
+      double area = target.getArea();
+      SmartDashboard.putNumber("PhotonCam/Area", area);
+    } 
   }
 
   /** Stops all Swerve Motors */
@@ -269,17 +283,17 @@ public class SwerveSubsystem extends SubsystemBase {
   public void updatePoseEstimator() {
     poseEstimator.update(getRotation2d(), getModulePositions());
 
-    boolean useMegaTag2 = false; //using megatag 1
+    boolean useMegaTag2 = true; 
     boolean doRejectUpdate = false;
 
-    if (!useMegaTag2) {
+    //using megatag 1
+    if (!useMegaTag2) { 
       LimelightHelpers.PoseEstimate mt1 = LimelightHelpers.getBotPoseEstimate_wpiBlue("limelight");
 
       if (mt1.tagCount == 1 && mt1.rawFiducials.length == 1) {
         if (mt1.rawFiducials[0].ambiguity > 0.7) {
           doRejectUpdate = true;
         }
-
         if (mt1.rawFiducials[0].distToCamera > 3) {
           doRejectUpdate = true;
         }
@@ -290,11 +304,27 @@ public class SwerveSubsystem extends SubsystemBase {
       }
 
       if(!doRejectUpdate) {
-        poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(0.5, 0.5, 9999999));
+        poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(0.5, 0.5, 9999999)); //StdDev from Limelight website
         poseEstimator.addVisionMeasurement(mt1.pose, mt1.timestampSeconds);
       }
+      
+    //using megatag 2 (updated)
+    } else {
+      LimelightHelpers.SetRobotOrientation("limelight", poseEstimator.getEstimatedPosition().getRotation().getDegrees(), 0.0, 0.0, 0.0, 0.0, 0.0);
+      LimelightHelpers.PoseEstimate mt2 = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2("limelight");
+
+      if (Math.abs(gyro.getRate()) > 720) {
+        doRejectUpdate = true;
+      }
+      if (mt2.tagCount == 0) {
+        doRejectUpdate = true;
+      }
+
+      if (!doRejectUpdate) {
+        poseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(0.7, 0.7, 9999999)); //StdDev from Limelight website
+        poseEstimator.addVisionMeasurement(mt2.pose, mt2.timestampSeconds);
+      }
     }
-    //code for megatag 2
   }
 
 // PID
@@ -320,6 +350,12 @@ public class SwerveSubsystem extends SubsystemBase {
     backRight.setpoint();
   }
 
+  /** Gets Robot PID Setpoint */
+  public double robotPIDSetpoint(char controller) {
+    PIDController pid = pidMap.get(controller);
+    return pid.getSetpoint();
+  }
+
   /**
    * Method for any Robot PID calculation
    * @param controller 'x', 'y', or 'o' for xPID, yPID, rotationPID
@@ -330,11 +366,5 @@ public class SwerveSubsystem extends SubsystemBase {
   public double robotPIDCalc(char controller, double measurement, double setpoint) {
     PIDController pid = pidMap.get(controller);
     return pid.calculate(measurement, setpoint);
-  }
-
-  /** Gets Robot PID Setpoint */
-  public double robotPIDSetpoint(char controller) {
-    PIDController pid = pidMap.get(controller);
-    return pid.getSetpoint();
-  }
+  } 
 }
