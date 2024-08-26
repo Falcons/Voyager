@@ -23,12 +23,12 @@ public class SwerveJoystick extends Command {
   private final SlewRateLimiter xLimiter, yLimiter, turningLimiter;
 
   public SwerveJoystick(
-    SwerveSubsystem swerveSubsystem, 
+    SwerveSubsystem swerve, 
     Supplier<Double> xSpd, 
     Supplier<Double> ySpd,
     Supplier<Double> turnSpd,
     Supplier<Boolean> field) {
-    this.swerveSubsystem = swerveSubsystem;
+    this.swerveSubsystem = swerve;
     this.xSpeedFunc = xSpd;
     this.ySpeedFunc = ySpd;
     this.turningSpeedFunc = turnSpd;

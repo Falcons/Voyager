@@ -10,6 +10,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.AnalogEncoder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants.ModuleConstants;
 
@@ -21,9 +22,10 @@ public class SwerveModule {
     private final PIDController turningPID;
 
     private final SparkAnalogSensor absEncoder;
+    private final AnalogEncoder absEncoderRIOAIPin;
     private final double absEncoderOffset;
 
-    public SwerveModule(String name, int driveMotorID, int turningMotorID, boolean reversed, double offsetDegrees) {
+    public SwerveModule(String name, int driveMotorID, int turningMotorID, int absEncoderPort, boolean reversed, double offsetDegrees) {
         this.moduleName = name;
         
         this.driveMotor = new CANSparkMax(driveMotorID, MotorType.kBrushless);
@@ -41,10 +43,18 @@ public class SwerveModule {
         turningEncoder.setPositionConversionFactor(ModuleConstants.turningRotToWheelDegree);
         turningEncoder.setVelocityConversionFactor(ModuleConstants.turningRPMToDegreePerSecond);
 
-        this.absEncoder = turningMotor.getAnalog();
-        this.absEncoderOffset = Units.degreesToRadians(offsetDegrees);
+        if (absEncoderPort == -1) {
+            absEncoderRIOAIPin = null;
+            this.absEncoder = turningMotor.getAnalog();
+            
 
-        absEncoder.setPositionConversionFactor(ModuleConstants.voltToRad);
+            absEncoder.setPositionConversionFactor(ModuleConstants.voltToRad);
+        } else {
+            absEncoder = null;
+            absEncoderRIOAIPin = new AnalogEncoder(absEncoderPort);
+        }
+
+        this.absEncoderOffset = Units.degreesToRadians(offsetDegrees);
 
         //kI value is only this high due to max integrator range
         turningPID = new PIDController(0.004, 0.05, 0);
@@ -95,21 +105,29 @@ public class SwerveModule {
 
 // Absolute Encoder
 
+    public double getAbsEncoderRaw() {
+        if (absEncoder != null) {
+            return absEncoder.getPosition();
+        } else {
+            return absEncoderRIOAIPin.getAbsolutePosition() * 2 * Math.PI;
+        }
+    }
+
     /** @return Abs position in correct units, incorrect range */
-    public double rawPositionWithOffset() {
-        return absEncoder.getPosition() - absEncoderOffset;
+    public double getRawPositionWithOffset() {
+        return getAbsEncoderRaw() - absEncoderOffset;
     }
 
     /** @return Absolute Encoder in radians (-Pi to Pi) CCW+ */
     public double getAbsEncoderRad() {
-        if (rawPositionWithOffset() < -Math.PI) {
-            return rawPositionWithOffset() + 2 * Math.PI;
+        if (getRawPositionWithOffset() < -Math.PI) {
+            return getRawPositionWithOffset() + 2 * Math.PI;
 
-        } else if (rawPositionWithOffset() > Math.PI){
-            return rawPositionWithOffset() - 2 * Math.PI;
+        } else if (getRawPositionWithOffset() > Math.PI){
+            return getRawPositionWithOffset() - 2 * Math.PI;
 
         } else {
-            return rawPositionWithOffset();
+            return getRawPositionWithOffset();
         }
     }
 

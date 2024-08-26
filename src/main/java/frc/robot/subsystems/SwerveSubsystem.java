@@ -41,28 +41,32 @@ public class SwerveSubsystem extends SubsystemBase {
   private final SwerveModule frontLeft = new SwerveModule(
     "Front Left",
     ModuleConstants.frontLeftDriveCANID, 
-    ModuleConstants.frontLeftTurningCANID, 
+    ModuleConstants.frontLeftTurningCANID,
+    ModuleConstants.sparkMaxDataPort, //Use this constant (-1) if connected with Spark Max Breakout Board instead of RIO Analog IN
     ModuleConstants.frontLeftReversed, 
     ModuleConstants.frontLeftAbsoluteOffset);
 
   private final SwerveModule frontRight = new SwerveModule(
     "Front Right",
     ModuleConstants.frontRightDriveCANID, 
-    ModuleConstants.frontRightTurningCANID, 
+    ModuleConstants.frontRightTurningCANID,
+    ModuleConstants.sparkMaxDataPort, 
     ModuleConstants.frontRightReversed, 
     ModuleConstants.frontRightAbsoluteOffset);
   
   private final SwerveModule backLeft = new SwerveModule(
     "Back Left",
     ModuleConstants.backLeftDriveCANID, 
-    ModuleConstants.backLeftTurningCANID, 
+    ModuleConstants.backLeftTurningCANID,
+    ModuleConstants.sparkMaxDataPort, 
     ModuleConstants.backLeftReversed, 
     ModuleConstants.backLeftAbsoluteOffset);
 
   private final SwerveModule backRight = new SwerveModule(
     "Back Right",
     ModuleConstants.backRightDriveCANID, 
-    ModuleConstants.backRightTurningCANID, 
+    ModuleConstants.backRightTurningCANID,
+    0,
     ModuleConstants.backRightReversed, 
     ModuleConstants.backRightAbsoluteOffset);
 
@@ -167,6 +171,9 @@ public class SwerveSubsystem extends SubsystemBase {
       SmartDashboard.putNumber("Module/Angle/" + module.moduleName, module.getState().angle.getDegrees());
     }
 
+    SmartDashboard.putNumber("Back Right Raw Abs", backRight.getAbsEncoderRaw());
+    SmartDashboard.putNumber("Back Right Raw w offset", backRight.getRawPositionWithOffset());
+
     SmartDashboard.putNumber("Robot/FieldX", getPose().getX());
     SmartDashboard.putNumber("Robot/X Speed", getChassisSpeeds().vxMetersPerSecond);
 
@@ -174,7 +181,6 @@ public class SwerveSubsystem extends SubsystemBase {
     SmartDashboard.putNumber("Robot/Y Speed", getChassisSpeeds().vyMetersPerSecond);
 
     SmartDashboard.putNumber("Robot/Heading Radians", getWrappedHeadingRadians());
-    SmartDashboard.putNumber("Robot/Heading Degrees", getWrappedHeadingDegrees());
     SmartDashboard.putNumber("Robot/Turning Speed", getChassisSpeeds().omegaRadiansPerSecond);
 
     SmartDashboard.putData(field2024);
@@ -282,8 +288,8 @@ public class SwerveSubsystem extends SubsystemBase {
   /** Updates Robot Pose based on Gyro and Module Positions */
   public void updatePoseEstimator() {
     poseEstimator.update(getRotation2d(), getModulePositions());
-
-    boolean useMegaTag2 = true; 
+    /*
+    boolean useMegaTag2 = false; 
     boolean doRejectUpdate = false;
 
     //using megatag 1
@@ -325,6 +331,7 @@ public class SwerveSubsystem extends SubsystemBase {
         poseEstimator.addVisionMeasurement(mt2.pose, mt2.timestampSeconds);
       }
     }
+     */
   }
 
 // PID

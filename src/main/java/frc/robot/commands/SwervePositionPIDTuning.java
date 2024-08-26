@@ -15,8 +15,8 @@ public class SwervePositionPIDTuning extends Command {
   
   private final SwerveSubsystem swerveSubsystem;
 
-  public SwervePositionPIDTuning(SwerveSubsystem swerveSubsystem) {
-    this.swerveSubsystem = swerveSubsystem;
+  public SwervePositionPIDTuning(SwerveSubsystem swerve) {
+    this.swerveSubsystem = swerve;
     addRequirements(swerveSubsystem);
   }
 

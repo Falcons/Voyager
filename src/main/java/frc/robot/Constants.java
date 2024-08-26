@@ -13,6 +13,7 @@ public final class Constants {
 
     public static final class ModuleConstants {
         public static final double neoFreeSpeedRPM = 5820;
+        public static final int sparkMaxDataPort = -1;
         
         //Drive Motor
         public static final double driveMotorRotToMetre = 14.0/50.0 * 27.0/17.0 * 15.0/45.0 * 4 * Math.PI / 39.3;
@@ -33,7 +34,6 @@ public final class Constants {
         public static final double voltToDegree = 360.0 / 3.3;
         public static final double voltToRad = 2 * Math.PI / 3.3;
         
-
         //Front Left
         public static final int frontLeftDriveCANID = 4;
         public static final int frontLeftTurningCANID = 3;
@@ -62,7 +62,7 @@ public final class Constants {
         public static final int backRightDriveCANID = 5;
         public static final int backRightTurningCANID = 6;
         public static final boolean backRightReversed = true;
-        public static final double backRightAbsoluteOffset = 95.95;
+        public static final double backRightAbsoluteOffset = Units.radiansToDegrees(1.639);//95.95;
         public static final double backRightTurningkP = 0.004;
         public static final double backRightTurningkI = 0.05;
     }

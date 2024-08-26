@@ -15,12 +15,13 @@ public class AllModulePID extends ParallelCommandGroup {
   private final SwerveSubsystem swerveSubsystem;
   public AllModulePID(SwerveSubsystem swerve) {
     this.swerveSubsystem = swerve;
+    addRequirements(swerveSubsystem);
     addCommands(
     swerveSubsystem.modulePIDTuning("Front Left"),
     swerveSubsystem.modulePIDTuning("Front Right"),
     swerveSubsystem.modulePIDTuning("Back Left"),
     swerveSubsystem.modulePIDTuning("Back Right"),
-    new InstantCommand(swerve::allModuleSetpoint)
+    new InstantCommand(swerveSubsystem::allModuleSetpoint)
     );
   }
 }
