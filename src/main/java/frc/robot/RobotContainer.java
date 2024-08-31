@@ -49,6 +49,7 @@ public class RobotContainer {
   }
 
   public Command getAutonomousCommand() {
-    return new PathPlannerAuto("better figure 8");
+    //return new PathPlannerAuto("better figure 8");
+    return null;
   }
 }

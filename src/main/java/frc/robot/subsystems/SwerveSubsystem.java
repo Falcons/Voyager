@@ -26,6 +26,7 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
+import edu.wpi.first.wpilibj.DigitalInput;
 //import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -72,7 +73,7 @@ public class SwerveSubsystem extends SubsystemBase {
 
   private final Pigeon2 gyro = new Pigeon2(DriveConstants.pigeonCANID);
 
-  PhotonCamera photonCam;
+  //PhotonCamera photonCam;
 
   private final PIDController xPID = new PIDController(DriveConstants.translationKP, 0, 0);
   private final PIDController yPID = new PIDController(DriveConstants.translationKP, 0, 0);
@@ -104,12 +105,14 @@ public class SwerveSubsystem extends SubsystemBase {
     'y', yPID,
     'o', rotationPID);
 
+  private final DigitalInput opticalLimit = new DigitalInput(0);
+
   StructArrayPublisher<SwerveModuleState> commandedStatePublisher = NetworkTableInstance.getDefault().getStructArrayTopic("SwerveStates/Commanded", SwerveModuleState.struct).publish();
   StructArrayPublisher<SwerveModuleState> statePublisher = NetworkTableInstance.getDefault().getStructArrayTopic("SwerveStates/Actual", SwerveModuleState.struct).publish();
   //StructPublisher<Pose2d> posPublisher = NetworkTableInstance.getDefault().getStructTopic("SwervePose/Actual", Pose2d.struct).publish();
 
   public SwerveSubsystem() {
-    photonCam = new PhotonCamera("USB2.0_PC_CAMERA");
+    //photonCam = new PhotonCamera("USB2.0_PC_CAMERA");
     rotationPID.enableContinuousInput(-Math.PI, Math.PI);
     rotationPID.setIZone(0.05);
 
@@ -184,7 +187,8 @@ public class SwerveSubsystem extends SubsystemBase {
     SmartDashboard.putNumber("Robot/Turning Speed", getChassisSpeeds().omegaRadiansPerSecond);
 
     SmartDashboard.putData(field2024);
-
+    SmartDashboard.putBoolean("Limit/Get", opticalLimit.get());
+    /*
     var result = photonCam.getLatestResult();
     boolean hasTargets = result.hasTargets();
     SmartDashboard.putBoolean("Has targets", hasTargets);
@@ -194,6 +198,7 @@ public class SwerveSubsystem extends SubsystemBase {
       double area = target.getArea();
       SmartDashboard.putNumber("PhotonCam/Area", area);
     } 
+    */
   }
 
   /** Stops all Swerve Motors */
