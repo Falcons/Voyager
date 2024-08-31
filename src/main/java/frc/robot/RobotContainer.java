@@ -5,7 +5,7 @@
 package frc.robot;
 
 
-import com.pathplanner.lib.commands.PathPlannerAuto;
+//import com.pathplanner.lib.commands.PathPlannerAuto;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -49,6 +49,7 @@ public class RobotContainer {
   }
 
   public Command getAutonomousCommand() {
-    return new PathPlannerAuto("better figure 8");
+    //return new PathPlannerAuto("better figure 8");
+    return null;
   }
 }
