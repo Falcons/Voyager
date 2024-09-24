@@ -72,6 +72,7 @@ public class SwerveSubsystem extends SubsystemBase {
     ModuleConstants.backRightAbsoluteOffset);
 
   private final Pigeon2 gyro = new Pigeon2(DriveConstants.pigeonCANID);
+  private double maxSpeed = ModuleConstants.driveMaxSpeedMPS;
 
   //PhotonCamera photonCam;
 
@@ -207,6 +208,17 @@ public class SwerveSubsystem extends SubsystemBase {
     frontRight.stop();
     backLeft.stop();
     backRight.stop();
+}
+
+  public void slowMode(){
+    this.maxSpeed = DriveConstants.slowModeSpeed;
+  }
+  public void fastMode(){
+    this.maxSpeed = ModuleConstants.driveMaxSpeedMPS;
+  }
+  public void toggleMode(){
+    if(this.maxSpeed == DriveConstants.slowModeSpeed) fastMode();
+    else slowMode();
   }
 
 // Gyro
@@ -236,7 +248,7 @@ public class SwerveSubsystem extends SubsystemBase {
   /** Sets all 4 Modules to specified Speed and Angle */
   public void setModuleStates(SwerveModuleState[] desiredStates) {
     commandedStatePublisher.set(desiredStates);
-    SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, ModuleConstants.driveMaxSpeedMPS);
+    SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, maxSpeed);
     frontLeft.setDesiredState(desiredStates[0]);
     frontRight.setDesiredState(desiredStates[1]);
     backLeft.setDesiredState(desiredStates[2]);

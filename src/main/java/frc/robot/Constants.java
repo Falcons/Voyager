@@ -97,5 +97,7 @@ public final class Constants {
         public static final double rotationKP = 2.5;
         public static final double rotationKI = 1.2;
         public static final double rotationKD = 0;
+
+        public static final double slowModeSpeed = 0.3;
     }
 }
