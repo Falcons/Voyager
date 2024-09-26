@@ -211,13 +211,13 @@ public class SwerveSubsystem extends SubsystemBase {
 }
 
   public void slowMode(){
-    this.maxSpeed = DriveConstants.slowModeSpeed;
+    this.maxSpeed = ModuleConstants.slowModeSpeed;
   }
   public void fastMode(){
     this.maxSpeed = ModuleConstants.driveMaxSpeedMPS;
   }
   public void toggleMode(){
-    if(this.maxSpeed == DriveConstants.slowModeSpeed) fastMode();
+    if(this.maxSpeed == ModuleConstants.slowModeSpeed) fastMode();
     else slowMode();
   }
 
