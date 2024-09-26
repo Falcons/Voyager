@@ -37,7 +37,6 @@ public class RobotContainer {
 
   private void configureBindings() {
     driver.b().onTrue(new InstantCommand(swerve::zeroHeading));
-    driver.y().onTrue(new InstantCommand(swerve::toggleMode));
     driver.x().whileTrue(new SwervePositionPIDTuning(swerve));
     driver.a().whileTrue(new AllModulePID(swerve));
 

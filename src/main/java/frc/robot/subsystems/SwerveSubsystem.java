@@ -72,7 +72,7 @@ public class SwerveSubsystem extends SubsystemBase {
     ModuleConstants.backRightAbsoluteOffset);
 
   private final Pigeon2 gyro = new Pigeon2(DriveConstants.pigeonCANID);
-  private double maxSpeed = ModuleConstants.driveMaxSpeedMPS;
+  // private double maxSpeed = ModuleConstants.driveMaxSpeedMPS;
 
   //PhotonCamera photonCam;
 
@@ -113,6 +113,7 @@ public class SwerveSubsystem extends SubsystemBase {
   //StructPublisher<Pose2d> posPublisher = NetworkTableInstance.getDefault().getStructTopic("SwervePose/Actual", Pose2d.struct).publish();
 
   public SwerveSubsystem() {
+    SmartDashboard.putNumber("max speed", ModuleConstants.driveMaxSpeedMPS);
     //photonCam = new PhotonCamera("USB2.0_PC_CAMERA");
     rotationPID.enableContinuousInput(-Math.PI, Math.PI);
     rotationPID.setIZone(0.05);
@@ -173,10 +174,12 @@ public class SwerveSubsystem extends SubsystemBase {
     for (SwerveModule module:modules) {
       SmartDashboard.putNumber("Module/Speed/" + module.moduleName, module.getState().speedMetersPerSecond);
       SmartDashboard.putNumber("Module/Angle/" + module.moduleName, module.getState().angle.getDegrees());
+      SmartDashboard.putNumber(module.moduleName + "raw Abs", module.getAbsEncoderRaw());
+      SmartDashboard.putNumber(module.moduleName + "raw Abs", module.getRawPositionWithOffset());
     }
 
-    SmartDashboard.putNumber("Back Right Raw Abs", backRight.getAbsEncoderRaw());
-    SmartDashboard.putNumber("Back Right Raw w offset", backRight.getRawPositionWithOffset());
+    // SmartDashboard.putNumber("Back Right Raw Abs", backRight.getAbsEncoderRaw());
+    // SmartDashboard.putNumber("Back Right Raw w offset", backRight.getRawPositionWithOffset());
 
     SmartDashboard.putNumber("Robot/FieldX", getPose().getX());
     SmartDashboard.putNumber("Robot/X Speed", getChassisSpeeds().vxMetersPerSecond);
@@ -210,7 +213,7 @@ public class SwerveSubsystem extends SubsystemBase {
     backRight.stop();
 }
 
-  public void slowMode(){
+  /** public void slowMode(){
     this.maxSpeed = ModuleConstants.slowModeSpeed;
   }
   public void fastMode(){
@@ -219,7 +222,7 @@ public class SwerveSubsystem extends SubsystemBase {
   public void toggleMode(){
     if(this.maxSpeed == ModuleConstants.slowModeSpeed) fastMode();
     else slowMode();
-  }
+  } **/
 
 // Gyro
 
@@ -248,7 +251,7 @@ public class SwerveSubsystem extends SubsystemBase {
   /** Sets all 4 Modules to specified Speed and Angle */
   public void setModuleStates(SwerveModuleState[] desiredStates) {
     commandedStatePublisher.set(desiredStates);
-    SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, maxSpeed);
+    SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, SmartDashboard.getNumber("max speed", ModuleConstants.driveMaxSpeedMPS));
     frontLeft.setDesiredState(desiredStates[0]);
     frontRight.setDesiredState(desiredStates[1]);
     backLeft.setDesiredState(desiredStates[2]);
