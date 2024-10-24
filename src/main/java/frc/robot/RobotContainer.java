@@ -37,7 +37,7 @@ public class RobotContainer {
     SmartDashboard.putData("Reset Field Pose", new InstantCommand(() -> swerve.resetPose(new Pose2d())).ignoringDisable(true));
     path_chooser.setDefaultOption("none", null);
     path_chooser.addOption("figure 8", new PathPlannerAuto("better figure 8"));
-    path_chooser.addOption("figure 8", new PathPlannerAuto("Auto 1"));
+    path_chooser.addOption("auto 1", new PathPlannerAuto("Auto 1"));
     SmartDashboard.putData(path_chooser);
   }
 
