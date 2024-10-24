@@ -5,9 +5,10 @@
 package frc.robot;
 
 
-//import com.pathplanner.lib.commands.PathPlannerAuto;
+import com.pathplanner.lib.commands.PathPlannerAuto;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -22,6 +23,7 @@ public class RobotContainer {
 
   private final SwerveSubsystem swerve = new SwerveSubsystem();
 
+  SendableChooser<PathPlannerAuto> path_chooser = new SendableChooser<PathPlannerAuto>();
   public RobotContainer() {
     swerve.setDefaultCommand(new SwerveJoystick(
       swerve, 
@@ -33,6 +35,10 @@ public class RobotContainer {
     configureBindings();
 
     SmartDashboard.putData("Reset Field Pose", new InstantCommand(() -> swerve.resetPose(new Pose2d())).ignoringDisable(true));
+    path_chooser.setDefaultOption("none", null);
+    path_chooser.addOption("figure 8", new PathPlannerAuto("better figure 8"));
+    path_chooser.addOption("figure 8", new PathPlannerAuto("Auto 1"));
+    SmartDashboard.putData(path_chooser);
   }
 
   private void configureBindings() {
@@ -48,7 +54,6 @@ public class RobotContainer {
   }
 
   public Command getAutonomousCommand() {
-    //return new PathPlannerAuto("better figure 8");
-    return null;
+    return path_chooser.getSelected();
   }
 }

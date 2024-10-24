@@ -213,17 +213,6 @@ public class SwerveSubsystem extends SubsystemBase {
     backRight.stop();
 }
 
-  /** public void slowMode(){
-    this.maxSpeed = ModuleConstants.slowModeSpeed;
-  }
-  public void fastMode(){
-    this.maxSpeed = ModuleConstants.driveMaxSpeedMPS;
-  }
-  public void toggleMode(){
-    if(this.maxSpeed == ModuleConstants.slowModeSpeed) fastMode();
-    else slowMode();
-  } **/
-
 // Gyro
 
   /** Resets Gyro Heading to 0 */
