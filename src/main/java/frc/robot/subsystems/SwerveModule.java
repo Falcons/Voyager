@@ -3,6 +3,7 @@ package frc.robot.subsystems;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.SparkAnalogSensor;
+import com.revrobotics.CANSparkBase.IdleMode;
 import com.revrobotics.CANSparkLowLevel.MotorType;
 
 import edu.wpi.first.math.controller.PIDController;
@@ -30,10 +31,12 @@ public class SwerveModule {
         
         this.driveMotor = new CANSparkMax(driveMotorID, MotorType.kBrushless);
         driveMotor.restoreFactoryDefaults();
+        driveMotor.setIdleMode(IdleMode.kBrake);
 
         this.turningMotor = new CANSparkMax(turningMotorID, MotorType.kBrushless);
         turningMotor.restoreFactoryDefaults();
         turningMotor.setInverted(reversed);
+        turningMotor.setIdleMode(IdleMode.kBrake);
 
         this.driveEncoder = driveMotor.getEncoder();
         driveEncoder.setPositionConversionFactor(ModuleConstants.driveMotorRotToMetre);
